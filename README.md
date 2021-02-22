@@ -1,2 +1,4 @@
 # Gestor de Fitxers
-Practica de Sistemes Operatius II de Miquel Vidal i Joan López
+Practica de Sistemes Operatius II
+## Autors
+Miquel Vidal i Joan López
