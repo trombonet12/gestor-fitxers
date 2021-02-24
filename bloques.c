@@ -8,7 +8,8 @@ static int descriptor = 0;
 int bmount(const char *camino)
 {
     //Establim l'enlaç amb el fitxer passat per paràmetre, aplicant els permisos i els flags adiets.
-    descriptor = open(camino, O_RDWR | O_CREAT, 0666);
+    //umask(000);
+    descriptor = open(camino, O_RDWR|O_CREAT, 0666);
     if (descriptor == -1)
     {
         //Cas operació errònia.
