@@ -18,7 +18,7 @@ int main(int argc, char **argv)
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
     //Inicialitzam a 0 totes les posicions del buffer.
-    memset(buffer, 0, BLOCKSIZE);
+    memset(buffer, 0, sizeof(buffer));
     //Recorrem tots els blocs.
     for (int i = 0; i < atoi(argv[2]); i++)
     {
