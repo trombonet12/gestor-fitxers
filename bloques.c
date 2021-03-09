@@ -1,5 +1,6 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
 
+//Include de la capçalera associada a bloques.c
 #include "bloques.h"
 //Declaram i inicialitzam una variable int que contindrà el valor del descriptor.
 static int descriptor = 0;
@@ -7,8 +8,9 @@ static int descriptor = 0;
 //Inicialitzar dispositiu virtual.
 int bmount(const char *camino)
 {
-    //Establim l'enlaç amb el fitxer passat per paràmetre, aplicant els permisos i els flags adiets.
+    //Instrucció que ens permet tenir els permisos d'accés i edició desitjats.
     umask(000);
+    //Establim l'enlaç amb el fitxer passat per paràmetre, aplicant els permisos i els flags adiets.
     descriptor = open(camino, O_RDWR|O_CREAT, 0666);
     if (descriptor == -1)
     {

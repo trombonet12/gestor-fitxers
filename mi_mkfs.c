@@ -1,6 +1,6 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
 
-#include "bloques.h"
+#include "ficheros_basico.h"
 //Declaram una varibale que contendrà el contigut a llegir o escriure. REALEMNT QUE FA
 unsigned char *buffer[BLOCKSIZE];
 
@@ -29,11 +29,18 @@ int main(int argc, char **argv)
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
     }
-
+    tamMB(atoi(argv[2]));
+    tamAI(atoi(argv[2])/4);
+    initSB(atoi(argv[2]),atoi(argv[2])/4);
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)
     {
         //Control d'erros.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
+   
+    
+   // initSB(atoi(argv[2]),atoi(argv[2])/4);
 }
+
+
