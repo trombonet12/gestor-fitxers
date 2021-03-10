@@ -18,7 +18,7 @@ int tamMB(unsigned int nbloques){
         //Si no és congruent amb mòdul 0, afegim un bloc més.
         tamanoMB = (auxiliar / BLOCKSIZE) + 1;
     }
-    printf("El tamaño del Mapa de Bits es: %d \n", tamanoMB); //Print clarificatiu
+    //printf("El tamaño del Mapa de Bits es: %d \n", tamanoMB); //Print clarificatiu
     return tamanoMB;
     
 }
@@ -37,7 +37,7 @@ int tamAI(unsigned int ninodos){
         //Si no és congruent amb mòdul 0, afegim un bloc més.
         tamanoAI = (ninodos / auxiliar) + 1;
     }
-    printf("El tamaño del array de Inodos es: %d \n", tamanoAI); //Print clarificatiu
+   // printf("El tamaño del array de Inodos es: %d \n", tamanoAI); //Print clarificatiu
     return tamanoAI;
 }
 
@@ -47,23 +47,67 @@ int initSB(unsigned int nbloques, unsigned int ninodos){
 struct superbloque SB;
 
 SB.posPrimerBloqueMB = posSB + tamSB;
-printf("El primer bloque de MB és: %d \n", SB.posPrimerBloqueMB);
+printf("El primer bloque de MB és: %d \n", SB.posPrimerBloqueMB); //Print clarificatiu
 SB.posUltimoBloqueMB = SB.posPrimerBloqueMB + tamMB(nbloques) -1;
-
+printf("El darrer bloc del MB és: %d \n", SB.posUltimoBloqueMB); //Print clarificatiu
 SB.posPrimerBloqueAI = SB.posUltimoBloqueMB + 1;
-
+printf("El primer bloc de l'array inodos és: %d \n", SB.posPrimerBloqueAI); //Print clarificatiu
 SB.posUltimoBloqueAI = SB.posPrimerBloqueAI + tamAI(ninodos) - 1;
+printf("El darrer bloc de l'array inodos és: %d \n", SB.posUltimoBloqueAI); //Print clarificatiu
+SB.posPrimerBloqueDatos = SB.posUltimoBloqueAI + 1;
+printf("El primer bloc de Datos és: %d \n", SB.posPrimerBloqueDatos); //Print clarificatiu
+SB.posUltimoBloqueDatos = nbloques -1;
+printf("El darrer bloc de Datoes és: %d \n", SB.posUltimoBloqueDatos); //Print clarificatiu
+SB.posInodoRaiz = 0;
+printf("La posició del inode arrel en l'array inodes és: %d \n", SB.posInodoRaiz); //Print clarificatiu
+SB.posPrimerInodoLibre = 0;
+printf("El primer inode lliure dins l'arrar inodes és: %d \n", SB.posPrimerInodoLibre); //Print clarificatiu
+SB.cantBloquesLibres = nbloques;
+printf("Quantitat de blocs lliures : %d \n", SB.cantBloquesLibres); //Print clarificatiu
+SB.cantInodosLibres = ninodos;
+printf("Quantitat de inodes lliures al array de inodes és: %d \n", SB.cantInodosLibres); //Print clarificatiu
+SB.totBloques = nbloques;
+printf("Quantitat de blocs totals és: %d \n", SB.totBloques); //Print clarificatiu
+SB.totInodos = ninodos;
+printf("Quantitat de inodes és: %d \n", SB.totInodos); //Print clarificatiu
+printf("Tamany de SB: %lu \n", sizeof(struct superbloque)); //Print clarificatiu
 
-SB.posPrimerBloqueDatos = SB.posPrimerBloqueAI + 1;
-
-
-
-
+if(bwrite(posSB, &SB)<0){
+     return fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     
-return 0;
+}else{
+    printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
+    return 0;
 }
+
+}
+
+
 
 int initMB(){
   
   return 0;
 }
+
+/*
+
+int initAI(){
+    SB.totInodos = ninodos;
+    struct inodo inodos [BLOCKSIZE/INODOSIZE];
+
+    contInodos = SB.posPrimerInodoLibre + 1;
+    for(int i = SB.posPrimerBloqueAI; i<= SB-posUltimoBloqueAI;i++){
+        for(int j = =; j<BLOCKSIZE/INODOSIZE; j++){
+            inodos[j].tipo = 'l';
+            if(contInodos < SB.totInodos){
+                inodos[j].punterosDirectos[0] = contInodos;
+                contInodos++;
+            }else{
+                inodos[j].punterosDirectos[0] = UINT_MAX;
+            }
+        }
+        bwrite(,&inodo);
+    }
+}
+
+*/

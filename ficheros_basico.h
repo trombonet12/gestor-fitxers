@@ -1,7 +1,7 @@
 //AUTORS: Joan Lòpez Ferrer i Miquel Vidal Cortés
 
 #include "bloques.h"
-
+#include <limits.h>
 #define posSB 0
 #define tamSB 1
 
