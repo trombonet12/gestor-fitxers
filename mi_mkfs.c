@@ -32,6 +32,8 @@ int main(int argc, char **argv)
     tamMB(atoi(argv[2]));
     tamAI(atoi(argv[2])/4);
     initSB(atoi(argv[2]),atoi(argv[2])/4);
+    initMB();
+    initAI();
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)
     {
