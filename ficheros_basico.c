@@ -77,7 +77,7 @@ int initSB(unsigned int nbloques, unsigned int ninodos)
     printf("Quantitat de blocs totals és: %d \n", SB.totBloques); //Print clarificatiu
     SB.totInodos = ninodos;
     printf("Quantitat de inodes és: %d \n", SB.totInodos);      //Print clarificatiu
-    printf("Tamany de SB: %lu \n", sizeof(struct superbloque)); //Print clarificatiu
+    //printf("Tamany de SB: %lu \n", sizeof(struct superbloque)); //Print clarificatiu
 
     if (bwrite(posSB, &SB) < 0)
     {
@@ -98,7 +98,7 @@ int initMB()
     int bits = 0; //Variable clarificativa
 
     //Llegim el SuperBloc
-    bread(0, SB);
+    bread(posSB, SB);
 
     //Preparam el buffer per escriure 0s
     memset(buffer, 0, sizeof(buffer));
@@ -120,7 +120,7 @@ int initMB()
 
 int initAI(){
     struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
-    bread(0, SB);
+    bread(posSB, SB);
     struct inodo inodos [BLOCKSIZE/INODOSIZE];
 
     int contInodos = SB->posPrimerInodoLibre;
@@ -136,7 +136,7 @@ int initAI(){
                     break;
                 }
             }
-            printf("%d ", contInodos); //Print Clarificatiu
+            //printf("%d ", inodos[j].punterosDirectos[0]); //Print Clarificatiu
         }
         bwrite(i,&inodos);
     }
