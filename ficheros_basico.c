@@ -22,7 +22,7 @@ int tamMB(unsigned int nbloques)
         //Si no és congruent amb mòdul 0, afegim un bloc més.
         tamanoMB = (auxiliar / BLOCKSIZE) + 1;
     }
-    //printf("El tamaño del Mapa de Bits es: %d \n", tamanoMB); //Print clarificatiu
+    printf("El tamaño del Mapa de Bits es: %d \n", tamanoMB); //Print clarificatiu
     return tamanoMB;
 }
 
@@ -44,10 +44,11 @@ int tamAI(unsigned int ninodos)
         //Si no és congruent amb mòdul 0, afegim un bloc més.
         tamanoAI = (ninodos / auxiliar) + 1;
     }
-    // printf("El tamaño del array de Inodos es: %d \n", tamanoAI); //Print clarificatiu
+     printf("El tamaño del array de Inodos es: %d \n", tamanoAI); //Print clarificatiu
     return tamanoAI;
 }
 
+//Mètode que inicialitza les dades del SB.
 int initSB(unsigned int nbloques, unsigned int ninodos)
 {
 
@@ -90,43 +91,63 @@ int initSB(unsigned int nbloques, unsigned int ninodos)
     }
 }
 
+//Mètode que inicialitza el MB.
 int initMB()
 {
     //Declaracio de les variables
     struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
     unsigned char *buffer[BLOCKSIZE];
-    int bits = 0; //Variable clarificativa
+    int blocs = 0; //Variable clarificativa
 
     //Llegim el SuperBloc
-    bread(posSB, SB);
+    if(bread(posSB, SB)){
+        //Lectura realitzada correctament.
+        printf("Lectura del Superbloqe realitzada correctament \n");
+    }else{
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
 
-    //Preparam el buffer per escriure 0s
+    //Preparam el buffer per escriure 0s.
     memset(buffer, 0, sizeof(buffer));
-    //Bucle que coloca 0 a les posicions del MB
+    //Bucle que coloca 0 els blocs associats al MB.
     for (int i = SB->posPrimerBloqueMB; i <= SB->posUltimoBloqueMB; i++)
     {   
-        //Control de errors durant l'escriptura
+        //Control de errors durant l'escriptura.
         if (bwrite(i, buffer) < 0)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
-        bits++; //Variable clarificativa
+        blocs++; //Variable clarificativa
     }
-    printf("Num de bits escrits: %d\n", bits); //Print Clarificatiu
+    printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu
 
     return 0;
 }
 
-
+//Mètode que inicialitza la llista de inodes lliures.
 int initAI(){
+    //CEclaració i incialització varibale Superbloque.
     struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
-    bread(posSB, SB);
+    //Llegim el SuperBloc
+    if(bread(posSB, SB)){
+        //Lectura realitzada correctament.
+        printf("Lectura del Superbloqe realitzada correctament \n");
+    }else{
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+    //Declaració variable inode.
     struct inodo inodos [BLOCKSIZE/INODOSIZE];
 
     int contInodos = SB->posPrimerInodoLibre;
+    //Recorrem tots els blocs associats a AI.
     for(int i = SB->posPrimerBloqueAI; i<= SB->posUltimoBloqueAI;i++){
+        //Recorrem byte byte cada bloc.
         for(int j = 0; j<BLOCKSIZE/INODOSIZE; j++){
+            //Assignam el valor de libre a la varibale tipo de l'j-inode;
             inodos[j].tipo = 'l';
+            //Mentre no arribem al inode final, encadenam inodes un a un.
             if(contInodos < SB->totInodos){
                 inodos[j].punterosDirectos[0] = contInodos;
                 contInodos++;
@@ -137,6 +158,7 @@ int initAI(){
                 }
             }
             //printf("%d ", inodos[j].punterosDirectos[0]); //Print Clarificatiu
+            //printf("\n");
         }
         bwrite(i,&inodos);
     }
