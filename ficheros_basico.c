@@ -44,7 +44,7 @@ int tamAI(unsigned int ninodos)
         //Si no és congruent amb mòdul 0, afegim un bloc més.
         tamanoAI = (ninodos / auxiliar) + 1;
     }
-     printf("El tamaño del array de Inodos es: %d \n", tamanoAI); //Print clarificatiu
+    printf("El tamaño del array de Inodos es: %d \n", tamanoAI); //Print clarificatiu
     return tamanoAI;
 }
 
@@ -77,17 +77,18 @@ int initSB(unsigned int nbloques, unsigned int ninodos)
     SB.totBloques = nbloques;
     printf("Quantitat de blocs totals és: %d \n", SB.totBloques); //Print clarificatiu
     SB.totInodos = ninodos;
-    printf("Quantitat de inodes és: %d \n", SB.totInodos);      //Print clarificatiu
+    printf("Quantitat de inodes és: %d \n", SB.totInodos); //Print clarificatiu
     //printf("Tamany de SB: %lu \n", sizeof(struct superbloque)); //Print clarificatiu
 
-    if (bwrite(posSB, &SB) < 0)
+    if (bwrite(posSB, &SB) == BLOCKSIZE)
     {
-        return fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+
+        printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
+        return 0;
     }
     else
     {
-        printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
-        return 0;
+        return fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 }
 
@@ -100,10 +101,13 @@ int initMB()
     int blocs = 0; //Variable clarificativa
 
     //Llegim el SuperBloc
-    if(bread(posSB, SB)){
+    if (bread(posSB, SB))
+    {
         //Lectura realitzada correctament.
         printf("Lectura del Superbloqe realitzada correctament \n");
-    }else{
+    }
+    else
+    {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
@@ -112,7 +116,7 @@ int initMB()
     memset(buffer, 0, sizeof(buffer));
     //Bucle que coloca 0 els blocs associats al MB.
     for (int i = SB->posPrimerBloqueMB; i <= SB->posUltimoBloqueMB; i++)
-    {   
+    {
         //Control de errors durant l'escriptura.
         if (bwrite(i, buffer) < 0)
         {
@@ -126,41 +130,293 @@ int initMB()
 }
 
 //Mètode que inicialitza la llista de inodes lliures.
-int initAI(){
-    //CEclaració i incialització varibale Superbloque.
+int initAI()
+{
+    //Declaració e incialització variable Superbloque.
     struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
     //Llegim el SuperBloc
-    if(bread(posSB, SB)){
+    if (bread(posSB, SB))
+    {
         //Lectura realitzada correctament.
-        printf("Lectura del Superbloqe realitzada correctament \n");
-    }else{
+        printf("Lectura del Superbloque realitzada correctament \n");
+    }
+    else
+    {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
     //Declaració variable inode.
-    struct inodo inodos [BLOCKSIZE/INODOSIZE];
+    struct inodo inodos[BLOCKSIZE / INODOSIZE];
 
     int contInodos = SB->posPrimerInodoLibre;
     //Recorrem tots els blocs associats a AI.
-    for(int i = SB->posPrimerBloqueAI; i<= SB->posUltimoBloqueAI;i++){
+    for (int i = SB->posPrimerBloqueAI; i <= SB->posUltimoBloqueAI; i++)
+    {
         //Recorrem byte byte cada bloc.
-        for(int j = 0; j<BLOCKSIZE/INODOSIZE; j++){
+        for (int j = 0; j < BLOCKSIZE / INODOSIZE; j++)
+        {
             //Assignam el valor de libre a la varibale tipo de l'j-inode;
             inodos[j].tipo = 'l';
             //Mentre no arribem al inode final, encadenam inodes un a un.
-            if(contInodos < SB->totInodos){
+            if (contInodos < SB->totInodos)
+            {
                 inodos[j].punterosDirectos[0] = contInodos;
                 contInodos++;
-            }else{
+            }
+            else
+            {
                 inodos[j].punterosDirectos[0] = UINT_MAX;
-                if(i==SB->posUltimoBloqueAI){
+                if (i == SB->posUltimoBloqueAI)
+                {
                     break;
                 }
             }
             //printf("%d ", inodos[j].punterosDirectos[0]); //Print Clarificatiu
             //printf("\n");
         }
-        bwrite(i,&inodos);
+        bwrite(i, inodos);
     }
     return 0;
+}
+
+int escribir_bit(unsigned int nbloque, unsigned int bit)
+{
+    //Declaració e incialització variable Superbloque.
+    struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
+    //Llegim el SuperBloc
+    if (bread(posSB, SB))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del Superbloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    //Declaram les variables necesaries
+    int posbyte = nbloque / 8;
+    int posbit = nbloque % 8;
+    int nbloqueMB = posbyte / BLOCKSIZE;
+    int nbloqueabs = SB->posPrimerBloqueMB + nbloqueMB;
+    unsigned char *bufferMB[BLOCKSIZE];
+
+    //LLegim el bloc corresponent
+    if (bread(nbloqueabs, bufferMB))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del bloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    //Obtenir la posicio dins el rang d'un bloc
+    posbyte = posbyte % BLOCKSIZE;
+
+    //Preparam La mascara
+    unsigned char mascara = 128;
+    mascara >>= posbit;
+
+    //Realtzam la modificacio
+    if (bit == 0)
+    {
+        printf("Posam a 0 el bit \n"); //Print Clarificatiu
+        bufferMB[posbyte] |= mascara;
+    }
+    else
+    {
+        printf("Posam a 1 el bit \n"); //Print Clarificatiu
+        bufferMB[posbyte] &= ~mascara;
+    }
+    //Guardam el bloc
+    if (bwrite(nbloqueabs, bufferMB) == BLOCKSIZE)
+    {
+        return EXIT_SUCCESS;
+    }
+    else
+    {
+        return EXIT_FAILURE;
+    }
+}
+
+char leer_bit(unsigned int nbloque)
+{
+    //Declaració e incialització variable Superbloque.
+    struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
+    //Llegim el SuperBloc
+    if (bread(posSB, SB))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del Superbloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    //Declaram les variables necesaries
+    int posbyte = nbloque / 8;
+    int posbit = nbloque % 8;
+    int nbloqueMB = posbyte / BLOCKSIZE;
+    int nbloqueabs = SB->posPrimerBloqueMB + nbloqueMB;
+    unsigned char *bufferMB[BLOCKSIZE];
+
+    //LLegim el bloc corresponent
+    if (bread(nbloqueabs, bufferMB))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del bloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    //Obtenir la posicio dins el rang d'un bloc
+    posbyte = posbyte % BLOCKSIZE;
+
+    //Preparam la mascara
+    unsigned char mascara = 128;
+    mascara >>= posbit;
+    mascara &= bufferMB[posbyte];
+    mascara >>= (7 - posbit);
+
+    printf("Valor máscara es: %d ", mascara);
+    return mascara;
+}
+
+int reservar_bloque()
+{
+
+    //Declaració e incialització variable Superbloque.
+    struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
+    //Llegim el SuperBloc
+    if (bread(posSB, SB))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del Superbloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    if (SB->cantBloquesLibres > 0)
+    {
+        unsigned char *bufferMB[BLOCKSIZE];
+        unsigned char *bufferAux[BLOCKSIZE];
+        memset(bufferAux, 255, sizeof(bufferAux));
+        int posBloqueMB = SB->posPrimerBloqueMB;
+        for (;; posBloqueMB++)
+        {
+            bread(posBloqueMB, bufferMB);
+            if (memcmp(bufferMB, bufferAux, sizeof(bufferAux)) < 0)
+            {
+                break;
+            }
+        }
+        int posbyte = 0;
+        for (;; posbyte++)
+        {
+            if (*bufferMB[posbyte] < 255)
+            {
+                break;
+            }
+        }
+        unsigned char mascara = 128;
+        int posbit = 0;
+
+        while (bufferMB[posbyte] & mascara)
+        {
+            bufferMB[posbyte] <<= 1;
+
+            posbit++;
+        }
+
+        unsigned int nbloque = ((posBloqueMB - SB->posPrimerBloqueMB) * BLOCKSIZE + posbyte) * 8 + posbit;
+
+        escribir_bit(nbloque, 1);
+
+        SB->cantBloquesLibres--;
+
+        if (bwrite(posSB, &SB) == BLOCKSIZE)
+        {
+            printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
+        }
+        else
+        {
+            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        }
+        unsigned char *buffer[BLOCKSIZE];
+        memset(buffer, 0, sizeof(buffer));
+
+        if (bwrite(nbloque, buffer) == BLOCKSIZE)
+        {
+            printf("Escriptura del bloc al dispositu virtual realitzat correctament.\n");
+        }
+        else
+        {
+            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        }
+        return nbloque;
+    }
+    else
+    {
+        return EXIT_FAILURE;
+    }
+}
+int liberar_bloque(unsigned int nbloque)
+{
+
+    escribir_bit(nbloque, 0);
+    struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
+    //Llegim el SuperBloc
+    if (bread(posSB, SB))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del Superbloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    SB->cantBloquesLibres++;
+
+    if (bwrite(posSB, &SB) == BLOCKSIZE)
+    {
+        printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
+    }
+    else
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    return nbloque;
+}
+
+int escribir_inodo(unsigned int ninodo, struct inodo inodo)
+{
+    struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
+    //Llegim el SuperBloc
+    if (bread(posSB, SB))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del Superbloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    
 }
