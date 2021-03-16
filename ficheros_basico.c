@@ -200,7 +200,7 @@ int escribir_bit(unsigned int nbloque, unsigned int bit)
     int posbit = nbloque % 8;
     int nbloqueMB = posbyte / BLOCKSIZE;
     int nbloqueabs = SB->posPrimerBloqueMB + nbloqueMB;
-    unsigned char *bufferMB[BLOCKSIZE];
+    unsigned char bufferMB[BLOCKSIZE];
 
     //LLegim el bloc corresponent
     if (bread(nbloqueabs, bufferMB))
@@ -264,7 +264,7 @@ char leer_bit(unsigned int nbloque)
     int posbit = nbloque % 8;
     int nbloqueMB = posbyte / BLOCKSIZE;
     int nbloqueabs = SB->posPrimerBloqueMB + nbloqueMB;
-    unsigned char *bufferMB[BLOCKSIZE];
+    unsigned char bufferMB[BLOCKSIZE];
 
     //LLegim el bloc corresponent
     if (bread(nbloqueabs, bufferMB))
@@ -310,8 +310,8 @@ int reservar_bloque()
 
     if (SB->cantBloquesLibres > 0)
     {
-        unsigned char *bufferMB[BLOCKSIZE];
-        unsigned char *bufferAux[BLOCKSIZE];
+        unsigned char bufferMB[BLOCKSIZE];
+        unsigned char bufferAux[BLOCKSIZE];
         memset(bufferAux, 255, sizeof(bufferAux));
         int posBloqueMB = SB->posPrimerBloqueMB;
         for (;; posBloqueMB++)
@@ -325,7 +325,7 @@ int reservar_bloque()
         int posbyte = 0;
         for (;; posbyte++)
         {
-            if (*bufferMB[posbyte] < 255)
+            if (bufferMB[posbyte] < 255)
             {
                 break;
             }
@@ -438,9 +438,13 @@ int escribir_inodo(unsigned int ninodo, struct inodo inodo)
     if (bwrite(numBloque, inodos) == BLOCKSIZE)
     {
         printf("Escriptura del bloc al dispositu virtual realitzat correctament.\n");
+        return EXIT_SUCCESS;
     }
     else
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return EXIT_FAILURE;
     }
+
+    
 }

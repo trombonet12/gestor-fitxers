@@ -34,6 +34,7 @@ int main(int argc, char **argv)
     initSB(atoi(argv[2]),atoi(argv[2])/4);
     initMB();
     initAI();
+    //  printf ("El bit 0 vale: %d ",leer_bit(0));
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)
     {
@@ -42,7 +43,7 @@ int main(int argc, char **argv)
     }
    
     
-   // initSB(atoi(argv[2]),atoi(argv[2])/4);
+   
 }
 
 
