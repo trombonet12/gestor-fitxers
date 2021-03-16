@@ -418,5 +418,29 @@ int escribir_inodo(unsigned int ninodo, struct inodo inodo)
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    
+    //Càlcul del bloc de AI que correspon amb el inode passat per paràmetre.
+    unsigned int numBloque = (ninodo / 8) + SB->posPrimerBloqueAI;
+
+    struct inodo inodos[BLOCKSIZE / INODOSIZE];
+
+    if (bread(numBloque, inodos))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del bloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+    inodos[ninodo % (BLOCKSIZE / INODOSIZE)] = inodo;
+
+    if (bwrite(numBloque, inodos) == BLOCKSIZE)
+    {
+        printf("Escriptura del bloc al dispositu virtual realitzat correctament.\n");
+    }
+    else
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
 }
