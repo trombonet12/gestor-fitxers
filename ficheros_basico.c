@@ -181,6 +181,8 @@ int initAI()
 
 int escribir_bit(unsigned int nbloque, unsigned int bit)
 {
+    printf("DINS EL MÈTODE ESCRIBIR_BIT");
+    printf("Valor de nbloque %d", nbloque);
     //Declaració e incialització variable Superbloque.
     struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
     //Llegim el SuperBloc
@@ -197,9 +199,13 @@ int escribir_bit(unsigned int nbloque, unsigned int bit)
 
     //Declaram les variables necesaries
     int posbyte = nbloque / 8;
+    printf("El valor de posbyte és: %d" , posbyte);
     int posbit = nbloque % 8;
+    printf("El valor de posbit és: %d", posbit);
     int nbloqueMB = posbyte / BLOCKSIZE;
+    printf("valor de nbloqueMB %d", nbloqueMB);
     int nbloqueabs = SB->posPrimerBloqueMB + nbloqueMB;
+    printf("valor de nbloqueabs %d", nbloqueabs);
     unsigned char bufferMB[BLOCKSIZE];
 
     //LLegim el bloc corresponent
@@ -216,21 +222,24 @@ int escribir_bit(unsigned int nbloque, unsigned int bit)
 
     //Obtenir la posicio dins el rang d'un bloc
     posbyte = posbyte % BLOCKSIZE;
-
+    printf("nou valor de posbyte %d", posbyte);
     //Preparam La mascara
     unsigned char mascara = 128;
-    mascara >>= posbit;
 
+    mascara >>= posbit;
+    printf("nou valor de mascara despres daplicar mascara ==> posbit és: %d", mascara);
     //Realtzam la modificacio
     if (bit == 0)
     {
         printf("Posam a 0 el bit \n"); //Print Clarificatiu
-        bufferMB[posbyte] |= mascara;
+        bufferMB[posbyte] &= ~mascara;
+        printf("valor de bufferMB[posbyte] es: %d " , bufferMB[posbyte]);
     }
-    else
+    else if (bit == 1)
     {
         printf("Posam a 1 el bit \n"); //Print Clarificatiu
-        bufferMB[posbyte] &= ~mascara;
+        bufferMB[posbyte] |= mascara;
+        printf("valor de bufferMB[posbyte] es: %d " , bufferMB[posbyte]);
     }
     //Guardam el bloc
     if (bwrite(nbloqueabs, bufferMB) == BLOCKSIZE)
@@ -245,6 +254,8 @@ int escribir_bit(unsigned int nbloque, unsigned int bit)
 
 char leer_bit(unsigned int nbloque)
 {
+    printf("\n");
+    printf("DINS LEER BIT");
     //Declaració e incialització variable Superbloque.
     struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
     //Llegim el SuperBloc
@@ -278,14 +289,21 @@ char leer_bit(unsigned int nbloque)
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
+   
+        printf("contingut de bufferMB: %d ", bufferMB[posbyte]);
+    
     //Obtenir la posicio dins el rang d'un bloc
     posbyte = posbyte % BLOCKSIZE;
 
     //Preparam la mascara
     unsigned char mascara = 128;
     mascara >>= posbit;
+    printf("valor de mascara despres de mascara>>= posbit %d", mascara );
     mascara &= bufferMB[posbyte];
+    printf("valor de mascara despres de mascara&= buffer.. %d", mascara);
     mascara >>= (7 - posbit);
+    printf("valor de mascara despres de mascara>>= (7-posbit) %d", mascara);
+
 
     printf("Valor máscara es: %d ", mascara);
     return mascara;
