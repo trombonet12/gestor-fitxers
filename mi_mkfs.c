@@ -34,6 +34,11 @@ int main(int argc, char **argv)
     initSB(atoi(argv[2]),atoi(argv[2])/4);
     initMB();
     initAI();
+   // int bloqueAux = reservar_bloque();
+   // printf("Reservar primer bloque libre: %d",bloqueAux);
+   // liberar_bloque(bloqueAux);
+    
+
     //escribir_bit(40003,1);
     //printf ("El bit 0 vale: %d ",leer_bit(40003));
     //Tancam l'enllaç amb el dispositiu virutal.

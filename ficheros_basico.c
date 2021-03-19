@@ -312,6 +312,7 @@ char leer_bit(unsigned int nbloque)
 int reservar_bloque()
 {
 
+printf("DENTRO DE RESERVAR BLOQUE");
     //Declaració e incialització variable Superbloque.
     struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
     //Llegim el SuperBloc
@@ -363,15 +364,24 @@ int reservar_bloque()
         escribir_bit(nbloque, 1);
 
         SB->cantBloquesLibres--;
+        printf("Cantidad de bloques libres después de reservar: %d", SB->cantBloquesLibres);
 
         if (bwrite(posSB, &SB) == BLOCKSIZE)
         {
-            printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
+            printf("LOL GROS: %d", SB-> cantBloquesLibres);
+            printf("Escriptura del SB al dispositu virtual realitzat correctament2222222.\n");
         }
         else
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
+    struct superbloque *SB2 = (struct superbloque *)malloc(sizeof(struct superbloque));
+        if(bread(posSB, SB2)){
+            printf("lol");
+        }else{
+            printf("pery");
+        }
+    printf("HEM LLEGIT LO SB2, COMPROVAM VALOR : %d", SB2->cantBloquesLibres);
         unsigned char *buffer[BLOCKSIZE];
         memset(buffer, 0, sizeof(buffer));
 
@@ -392,7 +402,8 @@ int reservar_bloque()
 }
 int liberar_bloque(unsigned int nbloque)
 {
-
+    printf("\n");
+    printf("DENTRO DE LIBERRAR BLOQUE");
     escribir_bit(nbloque, 0);
     struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
     //Llegim el SuperBloc
@@ -407,7 +418,9 @@ int liberar_bloque(unsigned int nbloque)
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
+    printf("Cantidad de bloques libres antes de liberar el bloque: %d", SB->cantBloquesLibres);
     SB->cantBloquesLibres++;
+    printf("Cantidad de bloques libres despues de liberar el  bloque: %d" , SB->cantBloquesLibres);
 
     if (bwrite(posSB, &SB) == BLOCKSIZE)
     {
@@ -437,6 +450,7 @@ int escribir_inodo(unsigned int ninodo, struct inodo inodo)
     }
 
     //Càlcul del bloc de AI que correspon amb el inode passat per paràmetre.
+    printf("lol: %d:", SB->posPrimerBloqueAI);
     unsigned int numBloque = (ninodo / 8) + SB->posPrimerBloqueAI;
 
     struct inodo inodos[BLOCKSIZE / INODOSIZE];
