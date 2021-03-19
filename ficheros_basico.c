@@ -93,6 +93,66 @@ int initSB(unsigned int nbloques, unsigned int ninodos)
 }
 
 //Mètode que inicialitza el MB.
+
+void ponerAUnoBits()
+{
+    printf("\n");
+    printf("DINS PONER A UNO BITS");
+    struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
+
+    //Llegim el SuperBloc
+    if (bread(posSB, SB))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del Superbloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    unsigned int numeroBitsPonerUno = tamAI(SB->totInodos) + tamMB(SB->totBloques) + tamSB;
+    unsigned char bufferMB[BLOCKSIZE];
+    int numeroBytesPonerUno = numeroBitsPonerUno / 8;
+    printf("NumeroBytesPonerUNo: %d", numeroBytesPonerUno);
+    for (int i = 0; i < numeroBytesPonerUno; i++)
+    {
+        bufferMB[i] = 255;
+    }
+    if (numeroBitsPonerUno % 8 == 0)
+    {
+        printf("Tots els bits ja estan possats a 1");
+    }
+    else
+    {
+        printf("Falten bits per posar a 1");
+        // int bitsFalten1 = numeroBytesPonerUno % 8;
+        bufferMB[numeroBytesPonerUno] = 224;
+    }
+
+    for (int j = 393; j < BLOCKSIZE; j++)
+    {
+        bufferMB[j] = 0;
+    }
+    printf("POSICIO PRIMER BLOQUE MB: %d", SB->posPrimerBloqueMB);
+    bwrite(SB->posPrimerBloqueMB, bufferMB);
+    printf("Cantidad de bloques libres: %d", SB->cantBloquesLibres);
+
+    SB->cantBloquesLibres = SB->cantBloquesLibres - numeroBitsPonerUno;
+    printf("Cantidad de bloques libres: %d", SB->cantBloquesLibres);
+    if (bwrite(posSB, &SB) == BLOCKSIZE)
+    {
+        printf("Escriptura del bloc al dispositu virtual realitzat correctament.\n");
+    }
+    else
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    printf("tot okey");
+}
+
 int initMB()
 {
     //Declaracio de les variables
@@ -126,6 +186,22 @@ int initMB()
     }
     printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu
 
+    for(int i = 0; i< 3139; i++){
+       escribir_bit(i,1);
+    }
+
+    SB->cantBloquesLibres = SB->cantBloquesLibres - 3139;
+    printf("Cantidad de bloques libres: %d", SB->cantBloquesLibres);
+    
+    if (bwrite(posSB, SB) == BLOCKSIZE)
+    {
+        printf("Escriptura del bloc al dispositu virtual realitzat correctament.\n");
+    }
+    else
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
     return 0;
 }
 
@@ -138,7 +214,7 @@ int initAI()
     if (bread(posSB, SB))
     {
         //Lectura realitzada correctament.
-        printf("Lectura del Superbloque realitzada correctament \n");
+        printf("Lectura del Superbloque realitzada correctament 2\n");
     }
     else
     {
@@ -150,6 +226,7 @@ int initAI()
 
     int contInodos = SB->posPrimerInodoLibre;
     //Recorrem tots els blocs associats a AI.
+    printf("POSICIO PRIMER BLOQUE AI: %d", SB->posPrimerBloqueAI);
     for (int i = SB->posPrimerBloqueAI; i <= SB->posUltimoBloqueAI; i++)
     {
         //Recorrem byte byte cada bloc.
@@ -199,7 +276,7 @@ int escribir_bit(unsigned int nbloque, unsigned int bit)
 
     //Declaram les variables necesaries
     int posbyte = nbloque / 8;
-    printf("El valor de posbyte és: %d" , posbyte);
+    printf("El valor de posbyte és: %d", posbyte);
     int posbit = nbloque % 8;
     printf("El valor de posbit és: %d", posbit);
     int nbloqueMB = posbyte / BLOCKSIZE;
@@ -233,13 +310,13 @@ int escribir_bit(unsigned int nbloque, unsigned int bit)
     {
         printf("Posam a 0 el bit \n"); //Print Clarificatiu
         bufferMB[posbyte] &= ~mascara;
-        printf("valor de bufferMB[posbyte] es: %d " , bufferMB[posbyte]);
+        printf("valor de bufferMB[posbyte] es: %d ", bufferMB[posbyte]);
     }
     else if (bit == 1)
     {
         printf("Posam a 1 el bit \n"); //Print Clarificatiu
         bufferMB[posbyte] |= mascara;
-        printf("valor de bufferMB[posbyte] es: %d " , bufferMB[posbyte]);
+        printf("valor de bufferMB[posbyte] es: %d ", bufferMB[posbyte]);
     }
     //Guardam el bloc
     if (bwrite(nbloqueabs, bufferMB) == BLOCKSIZE)
@@ -289,21 +366,19 @@ char leer_bit(unsigned int nbloque)
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-   
-        printf("contingut de bufferMB: %d ", bufferMB[posbyte]);
-    
+    printf("contingut de bufferMB: %d ", bufferMB[posbyte]);
+
     //Obtenir la posicio dins el rang d'un bloc
     posbyte = posbyte % BLOCKSIZE;
 
     //Preparam la mascara
     unsigned char mascara = 128;
     mascara >>= posbit;
-    printf("valor de mascara despres de mascara>>= posbit %d", mascara );
+    printf("valor de mascara despres de mascara>>= posbit %d", mascara);
     mascara &= bufferMB[posbyte];
     printf("valor de mascara despres de mascara&= buffer.. %d", mascara);
     mascara >>= (7 - posbit);
     printf("valor de mascara despres de mascara>>= (7-posbit) %d", mascara);
-
 
     printf("Valor máscara es: %d ", mascara);
     return mascara;
@@ -312,7 +387,7 @@ char leer_bit(unsigned int nbloque)
 int reservar_bloque()
 {
 
-printf("DENTRO DE RESERVAR BLOQUE");
+    printf("DENTRO DE RESERVAR BLOQUE");
     //Declaració e incialització variable Superbloque.
     struct superbloque *SB = (struct superbloque *)malloc(sizeof(struct superbloque));
     //Llegim el SuperBloc
@@ -366,22 +441,25 @@ printf("DENTRO DE RESERVAR BLOQUE");
         SB->cantBloquesLibres--;
         printf("Cantidad de bloques libres después de reservar: %d", SB->cantBloquesLibres);
 
-        if (bwrite(posSB, &SB) == BLOCKSIZE)
+        if (bwrite(posSB, SB) == BLOCKSIZE)
         {
-            printf("LOL GROS: %d", SB-> cantBloquesLibres);
+            printf("LOL GROS: %d", SB->cantBloquesLibres);
             printf("Escriptura del SB al dispositu virtual realitzat correctament2222222.\n");
         }
         else
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
-    struct superbloque *SB2 = (struct superbloque *)malloc(sizeof(struct superbloque));
-        if(bread(posSB, SB2)){
+        struct superbloque *SB2 = (struct superbloque *)malloc(sizeof(struct superbloque));
+        if (bread(posSB, SB2))
+        {
             printf("lol");
-        }else{
+        }
+        else
+        {
             printf("pery");
         }
-    printf("HEM LLEGIT LO SB2, COMPROVAM VALOR : %d", SB2->cantBloquesLibres);
+        printf("HEM LLEGIT LO SB2, COMPROVAM VALOR : %d", SB2->cantBloquesLibres);
         unsigned char *buffer[BLOCKSIZE];
         memset(buffer, 0, sizeof(buffer));
 
@@ -420,9 +498,9 @@ int liberar_bloque(unsigned int nbloque)
 
     printf("Cantidad de bloques libres antes de liberar el bloque: %d", SB->cantBloquesLibres);
     SB->cantBloquesLibres++;
-    printf("Cantidad de bloques libres despues de liberar el  bloque: %d" , SB->cantBloquesLibres);
+    printf("Cantidad de bloques libres despues de liberar el  bloque: %d", SB->cantBloquesLibres);
 
-    if (bwrite(posSB, &SB) == BLOCKSIZE)
+    if (bwrite(posSB, SB) == BLOCKSIZE)
     {
         printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
     }
@@ -477,6 +555,4 @@ int escribir_inodo(unsigned int ninodo, struct inodo inodo)
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         return EXIT_FAILURE;
     }
-
-    
 }
