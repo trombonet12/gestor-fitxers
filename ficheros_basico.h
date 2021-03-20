@@ -2,6 +2,7 @@
 
 #include "bloques.h"
 #include <limits.h>
+#include <time.h>
 #define posSB 0
 #define tamSB 1
 
@@ -64,4 +65,6 @@ char leer_bit(unsigned int nbloque);
 int reservar_bloque();
 int liberar_bloque(unsigned int nbloque);
 int escribir_inodo (unsigned int ninodo, struct inodo inodo);
+int leer_inodo(unsigned int ninodo, struct inodo *inodo);
+int reservar_inodo(unsigned char tipo, unsigned char permisos);
 void ponerAUnoBits();
