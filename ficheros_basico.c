@@ -156,7 +156,7 @@ void ponerAUnoBits()
     printf("\n");
 }
 
-int initMB()
+int initMB(unsigned int nbloques)
 {
     printf("DINS initMB");
     //Declaracio de les variables
@@ -191,12 +191,12 @@ int initMB()
     printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu
 
     //Posar a 1 el bits corresponents als blocs dels Metadatos.
-    for (int i = 0; i < 3139; i++)
+    for (int i = 0; i < (tamSB + tamMB(nbloques) + tamAI(nbloques)); i++)
     {
         escribir_bit(i, 1);
     }
     //Actualització de la quantitat de bloc lliures.
-    SB.cantBloquesLibres = SB.cantBloquesLibres - 3139;
+    SB.cantBloquesLibres = SB.cantBloquesLibres - (tamSB + tamMB(nbloques) + tamAI(nbloques));
     printf("Cantidad de bloques libres: %d", SB.cantBloquesLibres);
     //Salvaguardam el SuperBloc dins el Dispositiu Virtual.
     if (bwrite(posSB, &SB) == BLOCKSIZE)
@@ -257,7 +257,7 @@ int initAI()
             //printf("%d ", inodos[j].punterosDirectos[0]); //Print Clarificatiu
             //printf("\n");
         }
-        //Escriptura del i-bloc corresponent associat 
+        //Escriptura del i-bloc corresponent associat
         if (bwrite(i, inodos) == BLOCKSIZE)
         {
             //Lectura realitzada correctament.
@@ -421,7 +421,7 @@ int reservar_bloque()
     }
     //Encara queden bloc lliures.
     if (SB.cantBloquesLibres > 0)
-    {   //Declarció d'un buffer.
+    { //Declarció d'un buffer.
         unsigned char bufferMB[BLOCKSIZE];
         //Declaració d'un buffer auxiliar.
         unsigned char bufferAux[BLOCKSIZE];
@@ -430,7 +430,7 @@ int reservar_bloque()
         //Recorrem tots els blocs corresponents al MB.
         int posBloqueMB = SB.posPrimerBloqueMB;
         for (;; posBloqueMB++)
-        {   //Lectura del dispositiu virtual del bloc corresponent a posBloqueMB.
+        { //Lectura del dispositiu virtual del bloc corresponent a posBloqueMB.
             bread(posBloqueMB, bufferMB);
             //Comparam cada bloc llegit amb el bufferAux. Cercam el primer bloc que tengui qualque byte a 0.
             if (memcmp(bufferMB, bufferAux, sizeof(bufferAux)) < 0)
@@ -568,6 +568,110 @@ int escribir_inodo(unsigned int ninodo, struct inodo inodo)
     else
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return EXIT_FAILURE;
+    }
+}
+
+int leer_inodo(unsigned int ninodo, struct inodo *inodo)
+{
+    struct superbloque SB;
+    //Llegim el SuperBloc
+    if (bread(posSB, &SB))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del Superbloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return EXIT_FAILURE;
+    }
+
+    //Càlcul del bloc de AI que correspon amb el inode passat per paràmetre.
+    printf("Primer bloque AI: %d:", SB.posPrimerBloqueAI);
+    unsigned int numBloque = (ninodo / 8) + SB.posPrimerBloqueAI;
+
+    struct inodo inodos[BLOCKSIZE / INODOSIZE];
+
+    if (bread(numBloque, inodos))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del bloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return EXIT_FAILURE;
+    }
+    //Volcam el inodo solicitat al punter passat per parametre.
+    inodo = &inodos[ninodo % (BLOCKSIZE / INODOSIZE)];
+
+    return EXIT_SUCCESS;
+}
+
+int reservar_inodo(unsigned char tipo, unsigned char permisos)
+{
+    struct superbloque SB;
+    //Llegim el SuperBloc
+    if (bread(posSB, &SB))
+    {
+        //Lectura realitzada correctament.
+        printf("Lectura del Superbloque realitzada correctament \n");
+    }
+    else
+    {
+        //Error en la lectura.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    if (SB.cantInodosLibres > 0)
+    {
+        //Guardam la posicio del inode reservat
+        unsigned int posInodoReservado = SB.posPrimerInodoLibre;
+
+        //Actualitzam SB perque apunti al seguent inode
+        SB.posPrimerInodoLibre++;
+
+        //Inicialitzam el inode
+        struct inodo inodo;
+
+        inodo.tipo = tipo;
+        inodo.permisos = permisos;
+        inodo.nlinks = 1;
+        inodo.tamEnBytesLog = 0;
+        inodo.atime = time(NULL);
+        inodo.mtime = time(NULL);
+        inodo.ctime = time(NULL);
+        inodo.numBloquesOcupados = 0;
+        for (int i = 0; i < 12; i++)
+        {
+            inodo.punterosDirectos[i] = 0;
+        }
+        for (int i = 0; i < 3; i++)
+        {
+            inodo.punterosIndirectos[i] = 0;
+        }
+
+        //Escrivim l'inode
+        escribir_inodo(posInodoReservado, inodo);
+
+        //Actualitzam i reescrivim SB
+        SB.cantInodosLibres--;
+        if (bwrite(posSB, &SB) == BLOCKSIZE)
+        {
+            printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
+        }
+        else
+        {
+            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        }
+        return posInodoReservado;
+    }
+    else
+    {
+        printf("No quedan Inodos libres \n");
         return EXIT_FAILURE;
     }
 }
