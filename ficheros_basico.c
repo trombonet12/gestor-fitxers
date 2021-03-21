@@ -544,7 +544,7 @@ int escribir_inodo(unsigned int ninodo, struct inodo inodo)
 
     //Càlcul del bloc de AI que correspon amb el inode passat per paràmetre.
     printf("lol: %d:", SB.posPrimerBloqueAI);
-    unsigned int numBloque = ((ninodo + INODOSIZE) / BLOCKSIZE) + SB.posPrimerBloqueAI;
+    unsigned int numBloque = ((ninodo * INODOSIZE) / BLOCKSIZE) + SB.posPrimerBloqueAI;
 
     struct inodo inodos[BLOCKSIZE / INODOSIZE];
 
@@ -590,7 +590,7 @@ int leer_inodo(unsigned int ninodo, struct inodo *inodo)
 
     //Càlcul del bloc de AI que correspon amb el inode passat per paràmetre.
     printf("Primer bloque AI: %d:", SB.posPrimerBloqueAI);
-    unsigned int numBloque = ((ninodo + INODOSIZE) / BLOCKSIZE) + SB.posPrimerBloqueAI;
+    unsigned int numBloque = ((ninodo * INODOSIZE) / BLOCKSIZE) + SB.posPrimerBloqueAI;
 
     struct inodo inodos[BLOCKSIZE / INODOSIZE];
 
