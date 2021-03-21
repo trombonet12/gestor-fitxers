@@ -191,13 +191,13 @@ int initMB()
     printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu
 
     //Posar a 1 el bits corresponents als blocs dels Metadatos.
-    int aux = tamSB + tamMB(SB.totBloques) + tamAI(SB.totInodos);
-    for (int i = 0; i < aux; i++)
+    int numBloquesMetaDatos = tamSB + tamMB(SB.totBloques) + tamAI(SB.totInodos);
+    for (int i = 0; i < numBloquesMetaDatos; i++)
     {
         escribir_bit(i, 1);
     }
     //Actualització de la quantitat de bloc lliures.
-    SB.cantBloquesLibres = SB.cantBloquesLibres - aux;
+    SB.cantBloquesLibres = SB.cantBloquesLibres - numBloquesMetaDatos;
     printf("Cantidad de bloques libres: %d", SB.cantBloquesLibres);
     //Salvaguardam el SuperBloc dins el Dispositiu Virtual.
     if (bwrite(posSB, &SB) == BLOCKSIZE)
