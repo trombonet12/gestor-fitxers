@@ -156,7 +156,7 @@ void ponerAUnoBits()
     printf("\n");
 }
 
-int initMB(unsigned int nbloques)
+int initMB(unsigned int nbloques,unsigned int ninodos)
 {
     printf("DINS initMB");
     //Declaracio de les variables
@@ -191,12 +191,12 @@ int initMB(unsigned int nbloques)
     printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu
 
     //Posar a 1 el bits corresponents als blocs dels Metadatos.
-    for (int i = 0; i < (tamSB + tamMB(nbloques) + tamAI(nbloques)); i++)
+    for (int i = 0; i < (tamSB + tamMB(nbloques) + tamAI(ninodos)); i++)
     {
         escribir_bit(i, 1);
     }
     //Actualització de la quantitat de bloc lliures.
-    SB.cantBloquesLibres = SB.cantBloquesLibres - (tamSB + tamMB(nbloques) + tamAI(nbloques));
+    SB.cantBloquesLibres = SB.cantBloquesLibres - (tamSB + tamMB(nbloques) + tamAI(ninodos));
     printf("Cantidad de bloques libres: %d", SB.cantBloquesLibres);
     //Salvaguardam el SuperBloc dins el Dispositiu Virtual.
     if (bwrite(posSB, &SB) == BLOCKSIZE)
@@ -544,7 +544,7 @@ int escribir_inodo(unsigned int ninodo, struct inodo inodo)
 
     //Càlcul del bloc de AI que correspon amb el inode passat per paràmetre.
     printf("lol: %d:", SB.posPrimerBloqueAI);
-    unsigned int numBloque = (ninodo / 8) + SB.posPrimerBloqueAI;
+    unsigned int numBloque = ((ninodo + INODOSIZE) / BLOCKSIZE) + SB.posPrimerBloqueAI;
 
     struct inodo inodos[BLOCKSIZE / INODOSIZE];
 
@@ -590,7 +590,7 @@ int leer_inodo(unsigned int ninodo, struct inodo *inodo)
 
     //Càlcul del bloc de AI que correspon amb el inode passat per paràmetre.
     printf("Primer bloque AI: %d:", SB.posPrimerBloqueAI);
-    unsigned int numBloque = (ninodo / 8) + SB.posPrimerBloqueAI;
+    unsigned int numBloque = ((ninodo + INODOSIZE) / BLOCKSIZE) + SB.posPrimerBloqueAI;
 
     struct inodo inodos[BLOCKSIZE / INODOSIZE];
 
@@ -625,7 +625,7 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
-
+    //Comprovam que hi hagui inodes lliures
     if (SB.cantInodosLibres > 0)
     {
         //Guardam la posicio del inode reservat
@@ -634,7 +634,7 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
         //Actualitzam SB perque apunti al seguent inode
         SB.posPrimerInodoLibre++;
 
-        //Inicialitzam el inode
+        //Inicialitzam tots els components del inode
         struct inodo inodo;
 
         inodo.tipo = tipo;
@@ -667,6 +667,7 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
+        //Retornam la posicio del inode reservat
         return posInodoReservado;
     }
     else

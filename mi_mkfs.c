@@ -57,7 +57,7 @@ int main(int argc, char **argv)
     struct inodo inodo;
     leer_inodo(reservar_inodo('d','d'),&inodo);
 
-    printf("INODO:%c %c %d %d %ld %ld %ld \n",inodo.tipo,inodo.permisos,inodo.nlinks,inodo.tamEnBytesLog,inodo.atime,inodo.mtime,inodo.ctime);
+    printf("INODO:%c %c %d %d \n",inodo.tipo,inodo.permisos,inodo.nlinks,inodo.tamEnBytesLog);
     */
 
     //Tancam l'enllaç amb el dispositiu virutal.
