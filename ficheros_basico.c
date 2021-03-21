@@ -156,7 +156,7 @@ void ponerAUnoBits()
     printf("\n");
 }
 
-int initMB(unsigned int nbloques,unsigned int ninodos)
+int initMB(unsigned int nbloques)
 {
     printf("DINS initMB");
     //Declaracio de les variables
@@ -191,12 +191,13 @@ int initMB(unsigned int nbloques,unsigned int ninodos)
     printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu
 
     //Posar a 1 el bits corresponents als blocs dels Metadatos.
-    for (int i = 0; i < (tamSB + tamMB(nbloques) + tamAI(ninodos)); i++)
+    int aux = tamSB + tamMB(nbloques) + tamAI(SB.totInodos);
+    for (int i = 0; i < aux; i++)
     {
         escribir_bit(i, 1);
     }
     //Actualització de la quantitat de bloc lliures.
-    SB.cantBloquesLibres = SB.cantBloquesLibres - (tamSB + tamMB(nbloques) + tamAI(ninodos));
+    SB.cantBloquesLibres = SB.cantBloquesLibres - (tamSB + tamMB(nbloques) + tamAI(SB.totInodos));
     printf("Cantidad de bloques libres: %d", SB.cantBloquesLibres);
     //Salvaguardam el SuperBloc dins el Dispositiu Virtual.
     if (bwrite(posSB, &SB) == BLOCKSIZE)
