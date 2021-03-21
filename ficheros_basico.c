@@ -197,7 +197,7 @@ int initMB()
         escribir_bit(i, 1);
     }
     //Actualització de la quantitat de bloc lliures.
-    SB.cantBloquesLibres = SB.cantBloquesLibres - (tamSB + tamMB(SB.totBloques) + tamAI(SB.totInodos));
+    SB.cantBloquesLibres = SB.cantBloquesLibres - aux;
     printf("Cantidad de bloques libres: %d", SB.cantBloquesLibres);
     //Salvaguardam el SuperBloc dins el Dispositiu Virtual.
     if (bwrite(posSB, &SB) == BLOCKSIZE)
