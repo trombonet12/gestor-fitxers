@@ -35,10 +35,11 @@ int main(int argc, char **argv)
     initMB();
     //ponerAUnoBits();
     initAI();
-    //int bloqueAux = reservar_bloque();
-    //printf("Reservar primer bloque libre: %d",bloqueAux);
-    //liberar_bloque(bloqueAux);
+    int bloqueAux = reservar_bloque();
+    printf("Reservar primer bloque libre: %d",bloqueAux);
+    liberar_bloque(bloqueAux);
 
+/*
     printf("El bit 0 vale: %d \n", leer_bit(0));
     printf("El bit 1 vale: %d \n", leer_bit(1));
     printf("El bit 13 vale: %d ", leer_bit(13));
@@ -51,8 +52,8 @@ int main(int argc, char **argv)
     printf("El bit 70000 vale: %d ", leer_bit(70000));
     printf("El bit 80000 vale: %d ", leer_bit(80000));
     printf("El bit 99999 vale: %d ", leer_bit(99999));
-
-    printf("inodo: %d ", reservar_inodo('d', 'd'));
+*/
+  //  printf("inodo: %d ", reservar_inodo('d', 'd'));
     /*
     struct inodo inodo;
     leer_inodo(reservar_inodo('d','d'),&inodo);
