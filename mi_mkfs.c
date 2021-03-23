@@ -35,33 +35,9 @@ int main(int argc, char **argv)
     initMB();
     //ponerAUnoBits();
     initAI();
-    int bloqueAux = reservar_bloque();
-    printf("Reservar primer bloque libre: %d",bloqueAux);
-    liberar_bloque(bloqueAux);
-
-/*
-    printf("El bit 0 vale: %d \n", leer_bit(0));
-    printf("El bit 1 vale: %d \n", leer_bit(1));
-    printf("El bit 13 vale: %d ", leer_bit(13));
-    printf("El bit 14 vale: %d ", leer_bit(14));
-    printf("El bit 3138 vale: %d ", leer_bit(3138));
-    printf("El bit 3139 vale: %d ", leer_bit(3139));
-    printf("El bit 40000 vale: %d ", leer_bit(40000));
-    printf("El bit 50000 vale: %d ", leer_bit(50000));
-    printf("El bit 60000 vale: %d ", leer_bit(60000));
-    printf("El bit 70000 vale: %d ", leer_bit(70000));
-    printf("El bit 80000 vale: %d ", leer_bit(80000));
-    printf("El bit 99999 vale: %d ", leer_bit(99999));
-*/
-  //  printf("inodo: %d ", reservar_inodo('d', 'd'));
     
-
-    //struct inodo inodo;
-    //leer_inodo(reservar_inodo('d','d'),&inodo);
-
-  //  printf("INODO:%c %c %d %d \n",inodo.tipo,inodo.permisos,inodo.nlinks,inodo.tamEnBytesLog);
+    printf("Creamos directorio raiz: %d \n", reservar_inodo('d', '7'));
     
-
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)
     {
