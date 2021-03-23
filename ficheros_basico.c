@@ -568,7 +568,7 @@ int leer_inodo(unsigned int ninodo, struct inodo *inodo)
         return EXIT_FAILURE;
     }
     //Volcam el inodo solicitat al punter passat per parametre.
-    inodo = &inodos[ninodo % (BLOCKSIZE / INODOSIZE)];
+    *inodo = inodos[ninodo % (BLOCKSIZE / INODOSIZE)];
 
     return EXIT_SUCCESS;
 }
@@ -719,4 +719,78 @@ int obtener_indice(int nblogico, int nivel_punteros)
         }
     }
     return EXIT_FAILURE; //Evitam el error "control reaches end of non-void function"
+}
+
+int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reservar)
+{
+    struct inodo inodo;
+    unsigned int ptr, ptr_ant, salvar_inodo, nRangoBL, nivel_punteros, indice;
+    unsigned int buffer[NPUNTEROS];
+    leer_inodo(ninodo, &inodo);
+    ptr = 0;
+    ptr_ant = 0;
+    salvar_inodo = 0;
+    nRangoBL = obtener_nRangoBL(inodo, nblogico, &ptr);
+    nivel_punteros = nRangoBL;
+    while (nivel_punteros > 0)
+    {
+        if (ptr == 0)
+        {
+            if (reservar == 0)
+            {
+                return EXIT_FAILURE;
+            }
+            else
+            {
+                salvar_inodo = 1;
+                ptr = reservar_bloque();
+                inodo.numBloquesOcupados++;
+                inodo.ctime = time(NULL);
+                if (nivel_punteros == nRangoBL)
+                {
+                    inodo.punterosIndirectos[nRangoBL - 1] = ptr;
+                    printf("El valor de ptr es: %d", ptr);
+                }
+                else
+                {
+                    buffer[indice] = ptr;
+                    bwrite(ptr_ant, buffer);
+                }
+            }
+        }
+        bread(ptr, buffer);
+        indice = obtener_indice(nblogico, nivel_punteros);
+        ptr_ant = ptr;
+        ptr = buffer[indice];
+        nivel_punteros--;
+    }
+    if (ptr == 0)
+    {
+        if (reservar == 0)
+        {
+            return EXIT_FAILURE;
+        }
+        else
+        {
+            salvar_inodo = 1;
+            ptr = reservar_bloque();
+            inodo.numBloquesOcupados++;
+            inodo.ctime = time(NULL);
+            if (nRangoBL == 0)
+            {
+                inodo.punterosDirectos[nblogico] = ptr;
+                printf("El valor de ptr es: %d", ptr);
+            }
+            else
+            {
+                buffer[indice] = ptr;
+                bwrite(ptr_ant, buffer);
+            }
+        }
+    }
+    if (salvar_inodo == 1)
+    {
+        escribir_inodo(ninodo, inodo);
+    }
+    return ptr;
 }
