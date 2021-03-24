@@ -734,8 +734,10 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     nivel_punteros = nRangoBL;
     while (nivel_punteros > 0)
     {
+        //No penjen blocs de punters.
         if (ptr == 0)
         {
+            //Bloc de punters inexistent.
             if (reservar == 0)
             {
                 return EXIT_FAILURE;
@@ -743,27 +745,33 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             else
             {
                 salvar_inodo = 1;
-                ptr = reservar_bloque();
+                ptr = reservar_bloque(); // de punters
                 inodo.numBloquesOcupados++;
-                inodo.ctime = time(NULL);
+                inodo.ctime = time(NULL);// data actual.
                 if (nivel_punteros == nRangoBL)
                 {
+                    //El bloc penja directament de l'inode.
                     inodo.punterosIndirectos[nRangoBL - 1] = ptr;
-                    printf("El valor de ptr es: %d", ptr);
+                    printf("inodo.punterosIndirectos[%d]: %d \n" , nRangoBL-1, ptr);
                 }
                 else
                 {
+                    //El bloc penja d'un altre bloc de punters.
                     buffer[indice] = ptr;
+                    printf("punteros_nivel1[%d] = %d \n", indice, ptr);
                     bwrite(ptr_ant, buffer);
                 }
             }
         }
         bread(ptr, buffer);
         indice = obtener_indice(nblogico, nivel_punteros);
+        //Guardam el punter.
         ptr_ant = ptr;
+        //Desplaçam el punter al següent nivell.
         ptr = buffer[indice];
         nivel_punteros--;
     }
+    //Ens trobam a nivell de dades.
     if (ptr == 0)
     {
         if (reservar == 0)
@@ -773,17 +781,18 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
         else
         {
             salvar_inodo = 1;
-            ptr = reservar_bloque();
+            ptr = reservar_bloque(); // De dades.
             inodo.numBloquesOcupados++;
             inodo.ctime = time(NULL);
             if (nRangoBL == 0)
             {
                 inodo.punterosDirectos[nblogico] = ptr;
-                printf("El valor de ptr es: %d", ptr);
+                printf("inodo.punterosDirectos[%d] =  %d \n", nblogico, ptr);
             }
             else
             {
                 buffer[indice] = ptr;
+                 printf("punteros_nivel1[%d] = %d \n" , indice, ptr);
                 bwrite(ptr_ant, buffer);
             }
         }
