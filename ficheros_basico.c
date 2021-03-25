@@ -93,8 +93,8 @@ void ponerAUnoBits()
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
-
-    unsigned int numBloquesMetaDatos = tamAI(SB.totInodos) + tamMB(SB.totBloques) + tamSB;
+    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);
+    int numBloquesMetaDatos = tamAI(SB.totInodos) + tamMB(SB.totBloques) + tamSB;
     int blocsMD = (numBloquesMetaDatos / 8) / BLOCKSIZE;
     unsigned char bufferMB[BLOCKSIZE];
     printf("Num de blocs de MD: %d\n", blocsMD); //Print Clarificatiu
@@ -114,7 +114,7 @@ void ponerAUnoBits()
     }
 
     unsigned char bufferAux[BLOCKSIZE];
-    int bytesMD = numBloquesMetaDatos / 8;
+    int bytesMD = (numBloquesMetaDatos / 8) % 1024;
     int bitesMD = numBloquesMetaDatos % 8;
     printf("Num de blocs de bytesMD: %d\n", bytesMD); //Print Clarificatiu
     printf("Num de blocs de bitesMD: %d\n", bitesMD); //Print Clarificatiu
@@ -126,11 +126,11 @@ void ponerAUnoBits()
 
     if (bitesMD != 0)
     {
-        unsigned char mascaras[] = {128, 192, 224, 248, 252, 254};
-        bufferAux[bytesMD] = mascaras[bitesMD-1];
+       unsigned char mascaras[] = {128, 192, 224, 248, 252, 254};
+        bufferAux[bytesMD] = mascaras[bitesMD-1]; //amb 254 no funciona be (bit 31374 = 1 i hauria de ser 0), amb 252, si que funciona.
     }
 
-    for (int i = bytesMD + 1; i < BLOCKSIZE; i++)
+    for (int i = bytesMD+1; i < BLOCKSIZE; i++)
     {
         bufferAux[i] = 0;
     }
@@ -140,7 +140,8 @@ void ponerAUnoBits()
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-
+    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);
+     printf("Cantidad de bloques MetaDatos: %d\n", numBloquesMetaDatos);
     SB.cantBloquesLibres = SB.cantBloquesLibres - numBloquesMetaDatos;
     printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);
     if (bwrite(posSB, &SB) == BLOCKSIZE)
@@ -160,7 +161,7 @@ int initMB()
 {
     //Declaracio de les variables
     struct superbloque SB;
-    unsigned char buffer[BLOCKSIZE];
+    unsigned char *buffer[BLOCKSIZE];
     int blocs = 0; //Variable clarificativa
 
     //Llegim el SuperBloc
@@ -195,7 +196,7 @@ int initMB()
         escribir_bit(i, 1);
     }
     //Actualització de la quantitat de bloc lliures.
-    SB.cantBloquesLibres = SB.cantBloquesLibres - numBloquesMetaDatos;
+    //SB.cantBloquesLibres = SB.cantBloquesLibres - numBloquesMetaDatos;
     //Salvaguardam el SuperBloc dins el Dispositiu Virtual.
     if (bwrite(posSB, &SB) == BLOCKSIZE)
     {
@@ -205,9 +206,7 @@ int initMB()
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
-    //ponerAUnoBits();
-    printf("SORTIM INITMB\n");
-    fflush(stdout);
+    ponerAUnoBits();
     return 0;
 }
 
@@ -756,7 +755,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     salvar_inodo = 0;
     nRangoBL = obtener_nRangoBL(inodo, nblogico, &ptr);
     nivel_punteros = nRangoBL;
-
+    printf("nRangoBL : %d \n", nRangoBL  );
     while (nivel_punteros > 0)
     {
         //No penjen blocs de punters.
@@ -772,18 +771,18 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
                 salvar_inodo = 1;
                 ptr = reservar_bloque(); // de punters
                 inodo.numBloquesOcupados++;
-                inodo.ctime = time(NULL); // data actual.
+                inodo.ctime = time(NULL);// data actual.
                 if (nivel_punteros == nRangoBL)
                 {
                     //El bloc penja directament de l'inode.
                     inodo.punterosIndirectos[nRangoBL - 1] = ptr;
-                    printf("inodo.punterosIndirectos[%d]: %d \n", nRangoBL - 1, ptr);
+                    printf("inodo.punterosIndirectos[%d]: %d \n" , nRangoBL-1, ptr);
                 }
                 else
                 {
                     //El bloc penja d'un altre bloc de punters.
                     buffer[indice] = ptr;
-                    printf("punteros_nivel%d[%d] = %d \n", nivel_punteros+1, indice, ptr);
+                    printf("punteros_nivel%d[%d] = %d \n", nivel_punteros,indice, ptr);
                     bwrite(ptr_ant, buffer);
                 }
             }
@@ -817,7 +816,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             else
             {
                 buffer[indice] = ptr;
-                printf("punteros_nivel%d[%d] = %d \n", nivel_punteros+1, indice, ptr);
+                printf("punteros_nivel%d[%d] = %d \n", nivel_punteros,indice, ptr);
                 bwrite(ptr_ant, buffer);
             }
         }
