@@ -64,11 +64,14 @@ int main(int argc, char **argv)
     struct inodo inodo;
     leer_inodo(0, &inodo);
     printf("INODO:%c %c %d %d \n", inodo.tipo, inodo.permisos, inodo.nlinks, inodo.tamEnBytesLog);
-    traducir_bloque_inodo(0,8,1);
-    traducir_bloque_inodo(0,204,1);
-    traducir_bloque_inodo(0,30004,1);
-    traducir_bloque_inodo(0,400004,1);
-    traducir_bloque_inodo(0,468750,1);
+    reservar_inodo('f','6');
+    leer_inodo(1, &inodo);
+    printf("INODO:%c %c %d %d \n", inodo.tipo, inodo.permisos, inodo.nlinks, inodo.tamEnBytesLog);
+    traducir_bloque_inodo(1,8,1);
+    traducir_bloque_inodo(1,204,1);
+    traducir_bloque_inodo(1,30004,1);
+    //traducir_bloque_inodo(1,400004,1);
+    //traducir_bloque_inodo(1,468750,1);
 
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)
