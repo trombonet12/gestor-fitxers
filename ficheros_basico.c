@@ -94,35 +94,55 @@ void ponerAUnoBits()
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    unsigned int numeroBitsPonerUno = tamAI(SB.totInodos) + tamMB(SB.totBloques) + tamSB;
+    unsigned int numBloquesMetaDatos = tamAI(SB.totInodos) + tamMB(SB.totBloques) + tamSB;
+    int blocsMD = (numBloquesMetaDatos / 8) / BLOCKSIZE;
     unsigned char bufferMB[BLOCKSIZE];
-    int numeroBytesPonerUno = numeroBitsPonerUno / 8;
-    printf("NumeroBytesPonerUNo: %d", numeroBytesPonerUno);
-    for (int i = 0; i < numeroBytesPonerUno; i++)
+    printf("Num de blocs de MD: %d\n", blocsMD); //Print Clarificatiu
+
+    if (blocsMD > 0)
     {
-        bufferMB[i] = 255;
-    }
-    if (numeroBitsPonerUno % 8 == 0)
-    {
-        printf("Tots els bits ja estan possats a 1");
-    }
-    else
-    {
-        printf("Falten bits per posar a 1");
-        // int bitsFalten1 = numeroBytesPonerUno % 8;
-        bufferMB[numeroBytesPonerUno] = 224;
+        memset(bufferMB, 255, sizeof(bufferMB));
+        //Bucle que coloca 1 els blocs associats als Metadatos.
+        for (int i = SB.posPrimerBloqueMB; i < (SB.posPrimerBloqueMB + blocsMD); i++)
+        {
+            //Control de errors durant l'escriptura.
+            if (bwrite(i, bufferMB) < 0)
+            {
+                fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            }
+        }
     }
 
-    for (int j = 393; j < BLOCKSIZE; j++)
-    {
-        bufferMB[j] = 0;
-    }
-    printf("POSICIO PRIMER BLOQUE MB: %d", SB.posPrimerBloqueMB);
-    bwrite(SB.posPrimerBloqueMB, bufferMB);
-    printf("Cantidad de bloques libres: %d", SB.cantBloquesLibres);
+    unsigned char bufferAux[BLOCKSIZE];
+    int bytesMD = numBloquesMetaDatos / 8;
+    int bitesMD = numBloquesMetaDatos % 8;
+    printf("Num de blocs de bytesMD: %d\n", bytesMD); //Print Clarificatiu
+    printf("Num de blocs de bitesMD: %d\n", bitesMD); //Print Clarificatiu
 
-    SB.cantBloquesLibres = SB.cantBloquesLibres - numeroBitsPonerUno;
-    printf("Cantidad de bloques libres: %d", SB.cantBloquesLibres);
+    for (int i = 0; i < bytesMD; i++)
+    {
+        bufferAux[i] = 255;
+    }
+
+    if (bitesMD != 0)
+    {
+        unsigned char mascaras[] = {128, 192, 224, 248, 252, 254};
+        bufferAux[bytesMD] = mascaras[bitesMD-1];
+    }
+
+    for (int i = bytesMD + 1; i < BLOCKSIZE; i++)
+    {
+        bufferAux[i] = 0;
+    }
+
+    if (bwrite(SB.posPrimerBloqueMB + blocsMD, bufferAux) <0)
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+
+    SB.cantBloquesLibres = SB.cantBloquesLibres - numBloquesMetaDatos;
+    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);
     if (bwrite(posSB, &SB) == BLOCKSIZE)
     {
         //printf("Escriptura del bloc al dispositu virtual realitzat correctament.\n");
@@ -132,14 +152,15 @@ void ponerAUnoBits()
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    printf("\n");
+    printf("FINAL PONER A 1 BITS\n");
+    fflush(stdout);
 }
 
 int initMB()
 {
     //Declaracio de les variables
     struct superbloque SB;
-    unsigned char *buffer[BLOCKSIZE];
+    unsigned char buffer[BLOCKSIZE];
     int blocs = 0; //Variable clarificativa
 
     //Llegim el SuperBloc
@@ -184,6 +205,9 @@ int initMB()
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
+    //ponerAUnoBits();
+    printf("SORTIM INITMB\n");
+    fflush(stdout);
     return 0;
 }
 
@@ -732,7 +756,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     salvar_inodo = 0;
     nRangoBL = obtener_nRangoBL(inodo, nblogico, &ptr);
     nivel_punteros = nRangoBL;
-    printf("nRangoBL : %d \n", nRangoBL  );
+
     while (nivel_punteros > 0)
     {
         //No penjen blocs de punters.
@@ -748,18 +772,18 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
                 salvar_inodo = 1;
                 ptr = reservar_bloque(); // de punters
                 inodo.numBloquesOcupados++;
-                inodo.ctime = time(NULL);// data actual.
+                inodo.ctime = time(NULL); // data actual.
                 if (nivel_punteros == nRangoBL)
                 {
                     //El bloc penja directament de l'inode.
                     inodo.punterosIndirectos[nRangoBL - 1] = ptr;
-                    printf("inodo.punterosIndirectos[%d]: %d \n" , nRangoBL-1, ptr);
+                    printf("inodo.punterosIndirectos[%d]: %d \n", nRangoBL - 1, ptr);
                 }
                 else
                 {
                     //El bloc penja d'un altre bloc de punters.
                     buffer[indice] = ptr;
-                    printf("punteros_nivel%d[%d] = %d \n", nivel_punteros,indice, ptr);
+                    printf("punteros_nivel%d[%d] = %d \n", nivel_punteros+1, indice, ptr);
                     bwrite(ptr_ant, buffer);
                 }
             }
@@ -793,7 +817,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             else
             {
                 buffer[indice] = ptr;
-                printf("punteros_nivel%d[%d] = %d \n", nivel_punteros,indice, ptr);
+                printf("punteros_nivel%d[%d] = %d \n", nivel_punteros+1, indice, ptr);
                 bwrite(ptr_ant, buffer);
             }
         }
