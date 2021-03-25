@@ -33,8 +33,9 @@ int main(int argc, char **argv)
     tamAI(atoi(argv[2]) / 4);
     initSB(atoi(argv[2]), atoi(argv[2]) / 4);
     initMB();
-    //ponerAUnoBits();
+    printf("PRINCIPI INIT AI\n");
     initAI();
+    printf("FINAL INIT AI\n");
     
     printf("Creamos directorio raiz: %d \n", reservar_inodo('d', '7'));
     
