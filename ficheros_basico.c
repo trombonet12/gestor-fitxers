@@ -732,6 +732,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     salvar_inodo = 0;
     nRangoBL = obtener_nRangoBL(inodo, nblogico, &ptr);
     nivel_punteros = nRangoBL;
+    printf("nRangoBL : %d \n", nRangoBL  );
     while (nivel_punteros > 0)
     {
         //No penjen blocs de punters.
@@ -758,7 +759,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
                 {
                     //El bloc penja d'un altre bloc de punters.
                     buffer[indice] = ptr;
-                    printf("punteros_nivel1[%d] = %d \n", indice, ptr);
+                    printf("punteros_nivel%d[%d] = %d \n", nivel_punteros,indice, ptr);
                     bwrite(ptr_ant, buffer);
                 }
             }
@@ -792,7 +793,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             else
             {
                 buffer[indice] = ptr;
-                 printf("punteros_nivel1[%d] = %d \n" , indice, ptr);
+                printf("punteros_nivel%d[%d] = %d \n", nivel_punteros,indice, ptr);
                 bwrite(ptr_ant, buffer);
             }
         }
