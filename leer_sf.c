@@ -47,8 +47,10 @@ int main(int argc, char **argv)
     printf("El bit 1 vale: %d \n", leer_bit(1));
     printf("El bit 13 vale: %d \n", leer_bit(13));
     printf("El bit 14 vale: %d \n", leer_bit(14));
-    printf("El bit 3138 vale: %d \n", leer_bit(31373));
-    printf("El bit 3139 vale: %d \n", leer_bit(31374));
+    printf("El bit 3138 vale: %d \n", leer_bit(3138));
+    printf("El bit 3139 vale: %d \n", leer_bit(3139));
+    printf("El bit 31373 vale: %d \n", leer_bit(31373));
+    printf("El bit 31374 vale: %d \n", leer_bit(31374));
     printf("El bit 40000 vale: %d \n", leer_bit(400000));
     printf("El bit 50000 vale: %d \n", leer_bit(500000));
     printf("El bit 60000 vale: %d \n", leer_bit(600000));
