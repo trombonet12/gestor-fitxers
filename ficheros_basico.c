@@ -75,34 +75,34 @@ int initSB(unsigned int nbloques, unsigned int ninodos)
     }
 }
 
-//Mètode que inicialitza el MB.
-
+//Mètode que escriu a 1 el bits del MB associats als MetaDatos de manera eficient.
 void ponerAUnoBits()
 {
-    printf("DINS PONER A UNO BITS");
+    //Decleració d'una varible strcut superbloque.
     struct superbloque SB;
 
     //Llegim el SuperBloc
-    if (bread(posSB, &SB))
+    if (bread(posSB, &SB)<0)
     {
-        //Lectura realitzada correctament.
-        //printf("Lectura del Superbloque realitzada correctament \n");
-    }
-    else
-    {
-        //Error en la lectura.
+      //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
-    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);
+    
+    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres); //Print clarificatiu
+    //Càlcul del número de blocs que representen els MetaDatos. 
     int numBloquesMetaDatos = tamAI(SB.totInodos) + tamMB(SB.totBloques) + tamSB;
+    //Càlcul del nombre de blocs SENCERS a posar a 1.
     int blocsMD = (numBloquesMetaDatos / 8) / BLOCKSIZE;
+    //Declaració d'una varibale buffer que representarà els blocs SENCERS  a posar a 1.
     unsigned char bufferMB[BLOCKSIZE];
-    printf("Num de blocs de MD: %d\n", blocsMD); //Print Clarificatiu
+    printf("Num de blocs de SENCERS dels MD a posar a 1: %d\n", blocsMD); //Print Clarificatiu
 
+    //Si tenim com a mínim un bloc SENCER  a posar a 1.
     if (blocsMD > 0)
     {
+        //Inicialitzam tot a 1 el buffer
         memset(bufferMB, 255, sizeof(bufferMB));
-        //Bucle que coloca 1 els blocs associats als Metadatos.
+        //Bucle que coloca 1 els blocs SENCERS associats als Metadatos.
         for (int i = SB.posPrimerBloqueMB; i < (SB.posPrimerBloqueMB + blocsMD); i++)
         {
             //Control de errors durant l'escriptura.
@@ -112,51 +112,51 @@ void ponerAUnoBits()
             }
         }
     }
-
+    //Declaració d'un buffer que ens ajudara a posar a 1 els bytes i bits restants, que no ocupen un bloc SENCER
     unsigned char bufferAux[BLOCKSIZE];
+    //Càlcul del nombre de bytes a posar a 1.
     int bytesMD = (numBloquesMetaDatos / 8) % 1024;
+    //Càlcul del nombre de bits a posar a un d'un byte.
     int bitesMD = numBloquesMetaDatos % 8;
     printf("Num de blocs de bytesMD: %d\n", bytesMD); //Print Clarificatiu
     printf("Num de blocs de bitesMD: %d\n", bitesMD); //Print Clarificatiu
-
+    //Posam a 1 els bytes calculats anteriorment
     for (int i = 0; i < bytesMD; i++)
     {
         bufferAux[i] = 255;
     }
-
+    //Si encara queda qualque byte, els bits del cual hem de posar a 1.
     if (bitesMD != 0)
     {
+        //Segons el residu, es selecciona el valor.
         unsigned char mascaras[] = {128, 192, 224, 240, 248, 252, 254};
         bufferAux[bytesMD] = mascaras[bitesMD - 1];
     }
-
+    //Finalment, posam a 0 totes les posicons restants del bufferAux.
     for (int i = bytesMD + 1; i < BLOCKSIZE; i++)
     {
         bufferAux[i] = 0;
     }
-
+    //Escriptura del bufferAux a la posició corresponent.
     if (bwrite(SB.posPrimerBloqueMB + blocsMD, bufferAux) < 0)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);
-    printf("Cantidad de bloques MetaDatos: %d\n", numBloquesMetaDatos);
+    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);//Prints clarificatius.
+    printf("Cantidad de bloques MetaDatos: %d\n", numBloquesMetaDatos);//Prints clarificatius.
+    //A la quantitat de blocs lliures (introduïts per teclat), li restam els associats als MetaDatos.
     SB.cantBloquesLibres = SB.cantBloquesLibres - numBloquesMetaDatos;
-    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);
-    if (bwrite(posSB, &SB) == BLOCKSIZE)
+    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);//Prints clarificatius.
+    //Tornam a esciure el SB amb les atributs que hem modificat.
+    if (bwrite(posSB, &SB) <0)
     {
-        //printf("Escriptura del bloc al dispositu virtual realitzat correctament.\n");
-    }
-    else
-    {
-        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    printf("FINAL PONER A 1 BITS\n");
-    fflush(stdout);
 }
 
+//Mètode que inicialitza el MB.
 int initMB()
 {
     //Declaracio de les variables
@@ -187,16 +187,8 @@ int initMB()
         }
         blocs++; //Variable clarificativa
     }
-    printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu
-                                                 /*
-    //Posar a 1 el bits corresponents als blocs dels Metadatos.
-    int numBloquesMetaDatos = tamSB + tamMB(SB.totBloques) + tamAI(SB.totInodos);
-    for (int i = 0; i < numBloquesMetaDatos; i++)
-    {
-        escribir_bit(i, 1);
-    }*/
-    //Actualització de la quantitat de bloc lliures.
-    //SB.cantBloquesLibres = SB.cantBloquesLibres - numBloquesMetaDatos;
+    printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu.
+
     //Salvaguardam el SuperBloc dins el Dispositiu Virtual.
     if (bwrite(posSB, &SB) == BLOCKSIZE)
     {
@@ -782,7 +774,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
                 {
                     //El bloc penja d'un altre bloc de punters.
                     buffer[indice] = ptr;
-                    printf("punteros_nivel%d[%d] = %d \n", nivel_punteros, indice, ptr);
+                    printf("punteros_nivel%d[%d] = %d \n", nivel_punteros+1, indice, ptr);
                     bwrite(ptr_ant, buffer);
                 }
             }
@@ -816,7 +808,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             else
             {
                 buffer[indice] = ptr;
-                printf("punteros_nivel%d[%d] = %d \n", nivel_punteros, indice, ptr);
+                printf("punteros_nivel%d[%d] = %d \n", nivel_punteros +1, indice, ptr);
                 bwrite(ptr_ant, buffer);
             }
         }

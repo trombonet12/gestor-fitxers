@@ -57,12 +57,13 @@ int main(int argc, char **argv)
     printf("El bit 70000 vale: %d \n", leer_bit(700000));
     printf("El bit 80000 vale: %d \n", leer_bit(800000));
     printf("El bit 99999 vale: %d \n", leer_bit(999999));
+
 /*
     int bloqueAux = reservar_bloque();
     printf("Reservar primer bloque libre: %d\n", bloqueAux);
     liberar_bloque(bloqueAux);
-    printf("Lo liberamos a continuación. \n");*/
-    /*
+    printf("Lo liberamos a continuación. \n");
+    
     struct inodo inodo;
     leer_inodo(0, &inodo);
     printf("INODO:%c %c %d %d \n", inodo.tipo, inodo.permisos, inodo.nlinks, inodo.tamEnBytesLog);
@@ -74,8 +75,8 @@ int main(int argc, char **argv)
     traducir_bloque_inodo(1,30004,1);
     traducir_bloque_inodo(1,400004,1);
     traducir_bloque_inodo(1,468750,1);
-    */
-
+    
+*/
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)
     {
