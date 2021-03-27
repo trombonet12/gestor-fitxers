@@ -602,18 +602,19 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
-    //Comprovam que hi hagui inodes lliures
+    //Comprovam que hi hagui inodes lliures.
     if (SB.cantInodosLibres > 0)
     {
-        //Guardam la posicio del inode reservat
+        //Guardam la posicio del inode reservat.
         unsigned int posInodoReservado = SB.posPrimerInodoLibre;
 
-        //Actualitzam SB perque apunti al seguent inode
+        //Actualitzam SB perque apunti al seguent inode.
         SB.posPrimerInodoLibre++;
 
-        //Inicialitzam tots els components del inode
+        //Inicialitzam tots els components del inode.
         struct inodo inodo;
 
+        //Inicialitzam els atributs de l'indeo corresponent.
         inodo.tipo = tipo;
         inodo.permisos = permisos;
         inodo.nlinks = 1;
@@ -631,10 +632,10 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
             inodo.punterosIndirectos[i] = 0;
         }
 
-        //Escrivim l'inode
+        //Escrivim l'inode.
         escribir_inodo(posInodoReservado, inodo);
 
-        //Actualitzam i reescrivim SB
+        //Actualitzam i reescrivim SB.
         SB.cantInodosLibres--;
         if (bwrite(posSB, &SB) == BLOCKSIZE)
         {
@@ -644,7 +645,7 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
-        //Retornam la posicio del inode reservat
+        //Retornam la posicio del inode reservat.
         return posInodoReservado;
     }
     else
@@ -662,7 +663,7 @@ int obtener_nRangoBL(struct inodo inodo, unsigned int nblogico, unsigned int *pt
 
     //Es troba dins de DIRECTOS
     if (nblogico < DIRECTOS)
-    {
+    {   
         *ptr = inodo.punterosDirectos[nblogico];
         return 0;
     }
@@ -753,7 +754,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
         //No penjen blocs de punters.
         if (ptr == 0)
         {
-            //Bloc de punters inexistent.
+            //Realitzam una consulta i no hi ha cap bloc de indexos.
             if (reservar == 0)
             {
                 return EXIT_FAILURE;
@@ -761,9 +762,9 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             else
             {
                 salvar_inodo = 1;
-                ptr = reservar_bloque(); // de punters
+                ptr = reservar_bloque(); // De punters
                 inodo.numBloquesOcupados++;
-                inodo.ctime = time(NULL); // data actual.
+                inodo.ctime = time(NULL); // Data actual.
                 if (nivel_punteros == nRangoBL)
                 {
                     //El bloc penja directament de l'inode.
@@ -785,11 +786,14 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
         ptr_ant = ptr;
         //Desplaçam el punter al següent nivell.
         ptr = buffer[indice];
+        //Dectrementam el nivell de punters en una unitat.
         nivel_punteros--;
     }
-    //Ens trobam a nivell de dades.
+    //Ens trobam a nivell de dades. 
+    //Tot està inicialitzat a 0 (Cap bloque reservat).
     if (ptr == 0)
-    {
+    {   
+        //Error, tot està inicialitzat a 0 i feim un consultar.
         if (reservar == 0)
         {
             return EXIT_FAILURE;
@@ -799,7 +803,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             salvar_inodo = 1;
             ptr = reservar_bloque(); // De dades.
             inodo.numBloquesOcupados++;
-            inodo.ctime = time(NULL);
+            inodo.ctime = time(NULL); //Data actual.
             if (nRangoBL == 0)
             {
                 inodo.punterosDirectos[nblogico] = ptr;
@@ -817,5 +821,5 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     {
         escribir_inodo(ninodo, inodo);
     }
-    return ptr;
+    return ptr; //Nbfisico del bloc de dades.
 }
