@@ -25,3 +25,4 @@ int mi_write_f (unsigned int ninodo, const void *buf_original, unsigned int offs
 int mi_read_f (unsigned int ninodo, void *buf_original, unsigned int offset, unsigned int nbytes);
 int mi_stat_f (unsigned int ninodo, struct STAT *p_stat);
 int mi_chmod_f (unsigned int ninodo, unsigned char permisos);
+void imprimir_stat (struct STAT *_stat); //Provisional, nose si passar per un direcció o no.

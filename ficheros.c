@@ -2,15 +2,18 @@
 
 #include "ficheros.h"
 
+//
 int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offset, unsigned int nbytes)
 {
 
     struct inodo inodo;
     leer_inodo(ninodo, &inodo);
+    int numeroBytesEscritos = 0;
 
     if ((inodo.permisos & 2) != 2)
     {
         printf("No tienes permisos de escritura en el inodo indicado \n");
+        return numeroBytesEscritos;
     }
     else
     {
@@ -29,6 +32,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         int nbfisico;
         unsigned char buf_bloque[BLOCKSIZE];
 
+        //El buffer a escriure cab a un sol bloc.
         if (primerBL == ultimoBL)
         {
             //Obtenim el nombre de bloc fisic, corresponent a primerBL.
@@ -47,10 +51,12 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             //Escribim els nbytes del buf_original fins els buf_bloque + desp1 (on hem de començar a escriure).
             memcpy(buf_bloque + desp1, buf_original, nbytes);
             //Salvaguardam el buf_orginal, amb el contingut modificat.
-            return bwrite(nbfisico, buf_bloque);//HEM DE REVISAR AIXÒ.
+            numeroBytesEscritos = bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
         }
         else
         {
+            //La escriptura afecta a més d'un bloc.
+            //Obtenim el nombre del bloc físic, corresponent a primerBL.
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 1);
             if (bread(nbfisico, buf_bloque))
             {
@@ -62,31 +68,71 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
                 fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                 return EXIT_FAILURE;
             }
+            //Escriptura del primer bloc lògic.
             memcpy(buf_bloque + desp1, buf_original, BLOCKSIZE - desp1);
-            bwrite(nbfisico,buf_bloque) //HEM DE REVISAR AIXÒ.
-            for(int i = primerBL + 1; i<ultimoBL; i++){
-                bwrite(nbfisico, buf_original + (BLOCKSIZE -desp1) + (i-primerBL-1)*BLOCKSIZE);
+          numeroBytesEscritos += bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
+            //Escriptura dels blocs lògics intermitjos.
+            for (int i = primerBL + 1; i < ultimoBL; i++)
+            {
+                numeroBytesEscritos += bwrite(nbfisico, buf_original + (BLOCKSIZE - desp1) + (i - primerBL - 1) * BLOCKSIZE);
             }
-            
+            nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 1);
+            bread(nbfisico, buf_bloque);
+            memcpy(buf_bloque, buf_original + (nbytes - desp2 - 1), desp2 + 1);
+           numeroBytesEscritos += bwrite(nbfisico, buf_bloque);
 
+            
+            //FALTA EL TEMA DE ACTUALITZAR LA INFORMACIÓ DELS METADATOS DE L'INODE.
         }
     }
+    return numeroBytesEscritos;
 }
 
+//Retorna la metainfromació d'un fitxer o directori (corresonent al inde passat per paràmetre).
 int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
 {
     struct inodo inodo;
-    if(leer_inodo(ninodo, &inodo)==EXIT_FAILURE) return EXIT_FAILURE;
+    if (leer_inodo(ninodo, &inodo) == EXIT_FAILURE)
+        return EXIT_FAILURE;
 
-    p_stat->tipo=inodo.tipo;
+    p_stat->tipo = inodo.tipo;
     p_stat->permisos = inodo.permisos;
-    p_stat->atime=inodo.atime;
-    p_stat->mtime=inodo.mtime;
-    p_stat->ctime=inodo.ctime;
-    p_stat->nlinks=inodo.nlinks;
-    p_stat->tamEnBytesLog=inodo.tamEnBytesLog;
-    p_stat->numBloquesOcupados=inodo.numBloquesOcupados;
-    
+    p_stat->atime = inodo.atime;
+    p_stat->mtime = inodo.mtime;
+    p_stat->ctime = inodo.ctime;
+    p_stat->nlinks = inodo.nlinks;
+    p_stat->tamEnBytesLog = inodo.tamEnBytesLog;
+    p_stat->numBloquesOcupados = inodo.numBloquesOcupados;
+
     return 0;
+}
+
+//Imprimir informació del struct STAT passat per paràmetre.
+void imprimir_stat(struct STAT *p_stat)
+{
+    printf("El tipo del STAT es: %c", p_stat->tipo);
+    printf("Los permisos del STAT es: %c", p_stat->permisos);
+    // printf("El atime del STAT es: %d", p_stat->atime ); --> AIXÒ SHA DE MODIFICAR (MIRAR EL NIVELL 3)
+    // printf("El mtime del STAT es: %d", p_stat->mtime );
+    // printf("El ctime del STAT es: %d", p_stat->ctime );
+    printf("Los nlinks del STAT es: %d", p_stat->nlinks);
+    printf("El tamEnBytesLog del STAT es: %d", p_stat->tamEnBytesLog);
+    printf("El numBloquesOcupados del STAT es: %d", p_stat->numBloquesOcupados);
+}
+
+//Mètode que actualitza l'atribut permisos d'un fitxer, passant per paràmetre el valor de l'inode que li correspon.
+int mi_chmod_f(unsigned int ninodo, unsigned char permisos)
+{
+    struct inodo inodo;
+    //lectura de l'inode.
+    if (leer_inodo(ninodo, &inodo) == EXIT_FAILURE)
+        return EXIT_FAILURE;
+    //Actualitzam valors dels inodes.
+    inodo.permisos = permisos;
+    inodo.ctime = time(NULL);
+    //Escriptura de l'inode actualitzat.
+    if (escribir_inodo(ninodo, inodo) == EXIT_FAILURE)
+        return EXIT_FAILURE;
     
+    return EXIT_SUCCESS;
 }
