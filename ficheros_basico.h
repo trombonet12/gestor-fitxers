@@ -1,4 +1,4 @@
-//AUTORS: Joan Lòpez Ferrer i Miquel Vidal Cortés
+//AUTORS: Joan López Ferrer i Miquel Vidal Cortés
 
 #include "bloques.h"
 #include <limits.h>
