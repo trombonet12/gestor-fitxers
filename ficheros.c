@@ -70,7 +70,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             }
             //Escriptura del primer bloc lògic.
             memcpy(buf_bloque + desp1, buf_original, BLOCKSIZE - desp1);
-          numeroBytesEscritos += bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
+            numeroBytesEscritos += bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
             //Escriptura dels blocs lògics intermitjos.
             for (int i = primerBL + 1; i < ultimoBL; i++)
             {
@@ -79,15 +79,86 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 1);
             bread(nbfisico, buf_bloque);
             memcpy(buf_bloque, buf_original + (nbytes - desp2 - 1), desp2 + 1);
-           numeroBytesEscritos += bwrite(nbfisico, buf_bloque);
-
-            
-            //FALTA EL TEMA DE ACTUALITZAR LA INFORMACIÓ DELS METADATOS DE L'INODE.
+            numeroBytesEscritos += bwrite(nbfisico, buf_bloque);
         }
     }
+    //Llegim l'inode actualitzat.
+    leer_inodo(ninodo, &inodo);
+    //Comprovam si hem escrit més enllà del EOF del fitxer associat al inode.
+    if (offset + nbytes > inodo.tamEnBytesLog)
+    {
+        //Actualitzam les dades associades al inde.
+        inodo.tamEnBytesLog = offset + nbytes;
+        inodo.ctime = time(NULL);
+    }
+    //Actualitzam les dades associades al inde.
+    inodo.mtime = time(NULL);
+    //Escriptura del node actualitzat.
+    escribir_inodo(ninodo, inodo);
+
     return numeroBytesEscritos;
 }
 
+int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsigned int nbytes)
+{
+
+    struct inodo inodo;
+    leer_inodo(ninodo, &inodo);
+    int leidos = 0;
+
+    if ((inodo.permisos & 4) != 4)
+    {
+        printf("No tienes permisos de lectura en el inodo indicado \n");
+    }
+    else
+    {
+        //Volem  començar a llegir més enllà del EOF.
+        if (offset >= inodo.tamEnBytesLog)
+        {
+            return leidos;
+        }
+        //Volem llegir més enllà del EOF.
+        if ((offset + nbytes) >= inodo.tamEnBytesLog)
+        {
+            //Llegim només els bytes que podem desde l'offset fins al EOF.
+            nbytes = inodo.tamEnBytesLog - offset;
+        }
+        //Calculam el primer bloc en el que hem d'escriure.
+        int primerBL = offset / BLOCKSIZE;
+        //Calculam el darrer bloc en el que hem d'escriure.
+        int ultimoBL = (offset + nbytes - 1) / BLOCKSIZE;
+        //Calculam el desplaçament dins el bloc.
+        int desp1 = offset % BLOCKSIZE;
+        //Calculam el desplaçament en el bloc per veure fins on arriben els nbytes escrits.
+        int desp2 = (offset + nbytes - 1) % BLOCKSIZE;
+        printf("Valor primerBL: %d\n", primerBL);
+        printf("Valor ultimoBL: %d\n", ultimoBL);
+        printf("Valor desp1: %d\n", desp1);
+        printf("Valor desp2: %d\n", desp2);
+        int nbfisico;
+        unsigned char buf_bloque[BLOCKSIZE];
+        
+        //El buffer a llegit es troba un ÚNIC bloc.
+        if(primerBL == ultimoBL){
+            nbfisico = traducir_bloque_inodo(ninodo,primerBL, 0);
+            if(nbfisico == -1){
+                print("El bloc de dades a llegir no existeix");
+                leidos += BLOCKSIZE;
+                return leidos;
+            }else{
+                leidos += bread(nbfisico, buf_original);
+                return leidos;
+
+            }
+        }else{
+            nbfisico = traducir_bloque_inodo(ninodo,primerBL, 0);
+            
+
+        }
+
+
+    }
+}
 //Retorna la metainfromació d'un fitxer o directori (corresonent al inde passat per paràmetre).
 int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
 {
@@ -133,6 +204,6 @@ int mi_chmod_f(unsigned int ninodo, unsigned char permisos)
     //Escriptura de l'inode actualitzat.
     if (escribir_inodo(ninodo, inodo) == EXIT_FAILURE)
         return EXIT_FAILURE;
-    
+
     return EXIT_SUCCESS;
 }
