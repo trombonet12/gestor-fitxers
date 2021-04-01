@@ -137,27 +137,88 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         printf("Valor desp2: %d\n", desp2);
         int nbfisico;
         unsigned char buf_bloque[BLOCKSIZE];
-        
+
         //El buffer a llegit es troba un ÚNIC bloc.
-        if(primerBL == ultimoBL){
-            nbfisico = traducir_bloque_inodo(ninodo,primerBL, 0);
-            if(nbfisico == -1){
-                print("El bloc de dades a llegir no existeix");
+        if (primerBL == ultimoBL)
+        {
+            //Obtenim el valor del bloc físic associat al bloc lògic a llegir.
+            nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
+            //Bloc físic no existeix.
+            if (nbfisico == -1)
+            {
+                printf("El bloc de datos a ller no existe \n");
+                //No llegim res, però si augmentam el valor del bytes llegits (tamnay del bloc).
                 leidos += BLOCKSIZE;
+                //Retonam la quantitat de bytes llegits del únic bloc llegit.
                 return leidos;
-            }else{
-                leidos += bread(nbfisico, buf_original);
-                return leidos;
-
             }
-        }else{
-            nbfisico = traducir_bloque_inodo(ninodo,primerBL, 0);
-            
-
+            else
+            {
+                //El bloc físic si que existeix.
+                //Lectura i increment del valor dels bytes llegits.
+                leidos += bread(nbfisico, buf_bloque);
+                //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
+                memcpy(buf_original, buf_bloque, nbytes);
+                //Retonam la quantitat de bytes llegits del únic bloc llegit.
+                return leidos;
+            }
         }
-
-
+        else
+        {
+            nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
+            //Bloc físic no existeix.
+            if (nbfisico == -1)
+            {
+                printf("El bloc de datos a ller no existe \n");
+                //No llegim res, però si augmentam el valor del bytes llegits (tamnay del bloc).
+                leidos += BLOCKSIZE;
+            }
+            else
+            {
+                //El bloc físic si que existeix.
+                //Tracament per al primer bloc lògic.
+                leidos += bread(nbfisico, buf_bloque);
+                //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
+                memcpy(buf_original, buf_bloque, nbytes);
+                //Tractament pels blocs lògics intermitjos.
+                for (int i = primerBL + 1; i < ultimoBL; i++)
+                {
+                    nbfisico = traducir_bloque_inodo(ninodo, i, 0);
+                    //Bloc físic no existeix.
+                    if (nbfisico == -1)
+                    {
+                        printf("El bloc de datos a ller no existe \n");
+                        leidos += BLOCKSIZE;
+                    }
+                    else
+                    {
+                        //El bloc físic si que existeix.
+                        leidos += bread(nbfisico, buf_bloque);
+                        memcpy(buf_original + (BLOCKSIZE - desp1) + (i - primerBL - 1) * BLOCKSIZE, buf_bloque, BLOCKSIZE);
+                    }
+                }
+                //Tractamnet per al darrer bloc lògic a llegir.
+                nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 0);
+                //Bloc físic no existeix.
+                if (nbfisico == -1)
+                {
+                    leidos += BLOCKSIZE;
+                    //Retonam la quantitat de bytes llegits de n blocs.
+                    return leidos;
+                }
+                else
+                {
+                    //Bloc físic si existeix.
+                    leidos += bread(nbfisico, buf_bloque);
+                    memcpy(buf_original + (nbytes - desp2 - 1), buf_bloque, desp2 - 1);
+                    //Retonam la quantitat de bytes llegits de n blocs.
+                    return leidos;
+                }
+            }
+        }
     }
+
+    return EXIT_FAILURE;
 }
 //Retorna la metainfromació d'un fitxer o directori (corresonent al inde passat per paràmetre).
 int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
