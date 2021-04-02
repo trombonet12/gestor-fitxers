@@ -242,14 +242,26 @@ int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
 //Imprimir informació del struct STAT passat per paràmetre.
 void imprimir_stat(struct STAT *p_stat)
 {
-    printf("El tipo del STAT es: %c", p_stat->tipo);
-    printf("Los permisos del STAT es: %c", p_stat->permisos);
-    // printf("El atime del STAT es: %d", p_stat->atime ); --> AIXÒ SHA DE MODIFICAR (MIRAR EL NIVELL 3)
-    // printf("El mtime del STAT es: %d", p_stat->mtime );
-    // printf("El ctime del STAT es: %d", p_stat->ctime );
-    printf("Los nlinks del STAT es: %d", p_stat->nlinks);
-    printf("El tamEnBytesLog del STAT es: %d", p_stat->tamEnBytesLog);
-    printf("El numBloquesOcupados del STAT es: %d", p_stat->numBloquesOcupados);
+    //Variables per poder imprimir el time
+    struct tm *ts;
+    char atime[80];
+    char mtime[80];
+    char ctime[80];
+
+    //Preparam els strings del time
+    ts = localtime(&p_stat->atime);
+    strftime(atime, sizeof(atime), "%a %Y-%m-%d %H:%M:%S\n", ts);
+    ts = localtime(&p_stat->mtime);
+    strftime(mtime, sizeof(mtime), "%a %Y-%m-%d %H:%M:%S\n", ts);
+    ts = localtime(&p_stat->ctime);
+    strftime(ctime, sizeof(ctime), "%a %Y-%m-%d %H:%M:%S\n", ts);
+
+    printf("El tipo del STAT es: %c\n", p_stat->tipo);
+    printf("Los permisos del STAT es: %c\n", p_stat->permisos);
+    printf("ATIME: %sMTIME: %sCTIME: %s", atime, mtime, ctime);
+    printf("Los nlinks del STAT es: %d\n", p_stat->nlinks);
+    printf("El tamEnBytesLog del STAT es: %d\n", p_stat->tamEnBytesLog);
+    printf("El numBloquesOcupados del STAT es: %d\n", p_stat->numBloquesOcupados);
 }
 
 //Mètode que actualitza l'atribut permisos d'un fitxer, passant per paràmetre el valor de l'inode que li correspon.

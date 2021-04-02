@@ -1,6 +1,6 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
 
-#include "ficheros_basico.h"
+#include "ficheros.h"
 
 int main(int argc, char **argv)
 {
@@ -58,24 +58,32 @@ int main(int argc, char **argv)
     printf("El bit 80000 vale: %d \n", leer_bit(800000));
     printf("El bit 99999 vale: %d \n", leer_bit(999999));
 
-
     int bloqueAux = reservar_bloque();
     printf("Reservar primer bloque libre: %d\n", bloqueAux);
     liberar_bloque(bloqueAux);
     printf("Lo liberamos a continuación. \n");
-    
+
     struct inodo inodo;
     leer_inodo(0, &inodo);
     printf("INODO:%c %c %d %d \n", inodo.tipo, inodo.permisos, inodo.nlinks, inodo.tamEnBytesLog);
-    reservar_inodo('f','6');
+    reservar_inodo('f', '6');
     leer_inodo(1, &inodo);
     printf("INODO:%c %c %d %d \n", inodo.tipo, inodo.permisos, inodo.nlinks, inodo.tamEnBytesLog);
-    traducir_bloque_inodo(1,8,1);
-    traducir_bloque_inodo(1,204,1);
-    traducir_bloque_inodo(1,30004,1);
-    traducir_bloque_inodo(1,400004,1);
-    traducir_bloque_inodo(1,468750,1);
-    
+    traducir_bloque_inodo(1, 8, 1);
+    traducir_bloque_inodo(1, 204, 1);
+    traducir_bloque_inodo(1, 30004, 1);
+    traducir_bloque_inodo(1, 400004, 1);
+    traducir_bloque_inodo(1, 468750, 1);
+
+    /*
+    struct STAT p_stat;
+    mi_stat_f(1, &p_stat);
+    imprimir_stat(&p_stat);
+    sleep(5); //L'he posat per poder veure clarament es canvi en ctime
+    mi_chmod_f(1, '7');
+    mi_stat_f(1, &p_stat);
+    imprimir_stat(&p_stat);
+    */
 
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)
