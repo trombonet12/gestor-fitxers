@@ -36,8 +36,8 @@ int main(int argc, char **argv)
                 printf("Offset: %d\n", offset[i]);
                 printf("Numero de Bytes escritos: %d\n", mi_write_f(ninodo, argv[2], offset[i], length));
                 mi_stat_f(ninodo, &p_stat);
-                printf("Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
-                printf("Num Bloques Ocupados: %d \n\n", p_stat.numBloquesOcupados);
+                fprintf(stderr,"Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
+                fprintf(stderr,"Num Bloques Ocupados: %d \n\n", p_stat.numBloquesOcupados);
             }
         }
         else
