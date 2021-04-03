@@ -574,7 +574,7 @@ int leer_inodo(unsigned int ninodo, struct inodo *inodo)
     if (bread(numBloque, inodos))
     {
         //Lectura realitzada correctament.
-        printf("Lectura del bloque realitzada correctament \n");
+        //printf("Lectura del bloque realitzada correctament \n");
     }
     else
     {
