@@ -82,14 +82,14 @@ void ponerAUnoBits()
     struct superbloque SB;
 
     //Llegim el SuperBloc
-    if (bread(posSB, &SB)<0)
+    if (bread(posSB, &SB) < 0)
     {
-      //Error en la lectura.
+        //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
-    
+
     printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres); //Print clarificatiu
-    //Càlcul del número de blocs que representen els MetaDatos. 
+    //Càlcul del número de blocs que representen els MetaDatos.
     int numBloquesMetaDatos = tamAI(SB.totInodos) + tamMB(SB.totBloques) + tamSB;
     //Càlcul del nombre de blocs SENCERS a posar a 1.
     int blocsMD = (numBloquesMetaDatos / 8) / BLOCKSIZE;
@@ -143,17 +143,16 @@ void ponerAUnoBits()
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);//Prints clarificatius.
-    printf("Cantidad de bloques MetaDatos: %d\n", numBloquesMetaDatos);//Prints clarificatius.
+    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);   //Prints clarificatius.
+    printf("Cantidad de bloques MetaDatos: %d\n", numBloquesMetaDatos); //Prints clarificatius.
     //A la quantitat de blocs lliures (introduïts per teclat), li restam els associats als MetaDatos.
     SB.cantBloquesLibres = SB.cantBloquesLibres - numBloquesMetaDatos;
-    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);//Prints clarificatius.
+    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres); //Prints clarificatius.
     //Tornam a esciure el SB amb les atributs que hem modificat.
-    if (bwrite(posSB, &SB) <0)
+    if (bwrite(posSB, &SB) < 0)
     {
-         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
-
 }
 
 //Mètode que inicialitza el MB.
@@ -663,7 +662,7 @@ int obtener_nRangoBL(struct inodo inodo, unsigned int nblogico, unsigned int *pt
 
     //Es troba dins de DIRECTOS
     if (nblogico < DIRECTOS)
-    {   
+    {
         *ptr = inodo.punterosDirectos[nblogico];
         return 0;
     }
@@ -775,7 +774,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
                 {
                     //El bloc penja d'un altre bloc de punters.
                     buffer[indice] = ptr;
-                    printf("punteros_nivel%d[%d] = %d \n", nivel_punteros+1, indice, ptr);
+                    printf("punteros_nivel%d[%d] = %d \n", nivel_punteros + 1, indice, ptr);
                     bwrite(ptr_ant, buffer);
                 }
             }
@@ -789,10 +788,10 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
         //Dectrementam el nivell de punters en una unitat.
         nivel_punteros--;
     }
-    //Ens trobam a nivell de dades. 
+    //Ens trobam a nivell de dades.
     //Tot està inicialitzat a 0 (Cap bloque reservat).
     if (ptr == 0)
-    {   
+    {
         //Error, tot està inicialitzat a 0 i feim un consultar.
         if (reservar == 0)
         {
@@ -812,7 +811,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             else
             {
                 buffer[indice] = ptr;
-                printf("punteros_nivel%d[%d] = %d \n", nivel_punteros +1, indice, ptr);
+                printf("punteros_nivel%d[%d] = %d \n", nivel_punteros + 1, indice, ptr);
                 bwrite(ptr_ant, buffer);
             }
         }
@@ -822,4 +821,42 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
         escribir_inodo(ninodo, inodo);
     }
     return ptr; //Nbfisico del bloc de dades.
+}
+
+int liberar_inodo(unsigned int ninodo)
+{
+
+    int bloquesLiberados = 0;
+    struct inodo inodo;
+    struct superbloque SB;
+    leer_inodo(ninodo, &inodo);
+    //Aqui ja incrementam la quantitat de blocs lliure, mitjançant liberar_bloque()
+    bloquesLiberados = liberar_bloques_inodo(0, &inodo);
+    inodo.numBloquesOcupados -= bloquesLiberados;
+    if (inodo.numBloquesOcupados == 0)
+    {
+        inodo.tipo = 'l';
+        inodo.tamEnBytesLog = 0;
+        bread(posSB, &SB); //Fer control d'erros.
+        //PROVISIONAL
+        inodo.punterosDirectos[0] = SB.posPrimerInodoLibre;
+        SB.posPrimerInodoLibre = ninodo;
+        escribir_inodo(inodo, inodo);
+        bwrite(posSB, &SB);
+
+        return ninodo;
+    }
+    else
+    {
+        EXIT_FAILURE;
+    }
+}
+
+int mi_truncar_f(unsigned int ninodo, unsigned int nbytes){
+
+struct  inodo inodo;
+leer_inodo(ninodo, &inodo);
+
+
+
 }
