@@ -42,7 +42,7 @@ int main(int argc, char **argv)
     printf("Tamany de SB: %lu \n", sizeof(struct superbloque));                              //Print clarificatiu
 
     printf("Sizeof struct inodo is: %lu\n", sizeof(struct inodo));
-
+    /*
     printf("El bit 0 vale: %d \n", leer_bit(0));
     printf("El bit 1 vale: %d \n", leer_bit(1));
     printf("El bit 13 vale: %d \n", leer_bit(13));
@@ -74,7 +74,7 @@ int main(int argc, char **argv)
     traducir_bloque_inodo(1, 30004, 1);
     traducir_bloque_inodo(1, 400004, 1);
     traducir_bloque_inodo(1, 468750, 1);
-
+    */
     /*
     struct STAT p_stat;
     mi_stat_f(1, &p_stat);
