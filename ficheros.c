@@ -51,7 +51,8 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             //Escribim els nbytes del buf_original fins els buf_bloque + desp1 (on hem de començar a escriure).
             memcpy(buf_bloque + desp1, buf_original, nbytes);
             //Salvaguardam el buf_orginal, amb el contingut modificat.
-            numeroBytesEscritos = bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
+            bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
+            numeroBytesEscritos = nbytes;
         }
         else
         {
@@ -70,7 +71,8 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             }
             //Escriptura del primer bloc lògic.
             memcpy(buf_bloque + desp1, buf_original, BLOCKSIZE - desp1);
-            numeroBytesEscritos += bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
+            bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
+            numeroBytesEscritos += nbytes;
             //Escriptura dels blocs lògics intermitjos.
             for (int i = primerBL + 1; i < ultimoBL; i++)
             {
@@ -135,20 +137,21 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         printf("Valor ultimoBL: %d\n", ultimoBL);
         printf("Valor desp1: %d\n", desp1);
         printf("Valor desp2: %d\n", desp2);
+        printf("Imprimeix??");
         int nbfisico;
         unsigned char buf_bloque[BLOCKSIZE];
 
         //El buffer a llegit es troba un ÚNIC bloc.
         if (primerBL == ultimoBL)
-        {
+        {   
             //Obtenim el valor del bloc físic associat al bloc lògic a llegir.
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
             //Bloc físic no existeix.
             if (nbfisico == -1)
             {
-                printf("El bloc de datos a ller no existe \n");
+                printf("El bloc de datos a leer no existe \n");
                 //No llegim res, però si augmentam el valor del bytes llegits (tamnay del bloc).
-                leidos += BLOCKSIZE;
+                leidos = BLOCKSIZE;
                 //Retonam la quantitat de bytes llegits del únic bloc llegit.
                 return leidos;
             }
@@ -156,7 +159,8 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             {
                 //El bloc físic si que existeix.
                 //Lectura i increment del valor dels bytes llegits.
-                leidos += bread(nbfisico, buf_bloque);
+                bread(nbfisico, buf_bloque);
+                leidos = nbytes;
                 //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
                 memcpy(buf_original, buf_bloque, nbytes);
                 //Retonam la quantitat de bytes llegits del únic bloc llegit.
@@ -169,7 +173,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             //Bloc físic no existeix.
             if (nbfisico == -1)
             {
-                printf("El bloc de datos a ller no existe \n");
+                printf("El bloc de datos a leer no existe \n");
                 //No llegim res, però si augmentam el valor del bytes llegits (tamnay del bloc).
                 leidos += BLOCKSIZE;
             }
@@ -177,7 +181,8 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             {
                 //El bloc físic si que existeix.
                 //Tracament per al primer bloc lògic.
-                leidos += bread(nbfisico, buf_bloque);
+                bread(nbfisico, buf_bloque);
+                leidos += nbytes;
                 //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
                 memcpy(buf_original, buf_bloque, nbytes);
                 //Tractament pels blocs lògics intermitjos.

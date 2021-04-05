@@ -34,7 +34,8 @@ int main(int argc, char **argv)
             {
                 printf("Nº inodo reservado: %d\n", ninodo);
                 printf("Offset: %d\n", offset[i]);
-                printf("Numero de Bytes escritos: %d\n", mi_write_f(ninodo, argv[2], offset[i], length));
+                int nbfisico = mi_write_f(ninodo, argv[2], offset[i], length);
+                printf("Numero de Bytes escritos: %d\n",nbfisico );
                 mi_stat_f(ninodo, &p_stat);
                 fprintf(stderr,"Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
                 fprintf(stderr,"Num Bloques Ocupados: %d \n\n", p_stat.numBloquesOcupados);
