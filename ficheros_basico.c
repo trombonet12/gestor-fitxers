@@ -747,7 +747,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     salvar_inodo = 0;
     nRangoBL = obtener_nRangoBL(inodo, nblogico, &ptr);
     nivel_punteros = nRangoBL;
-    printf("nRangoBL : %d \n", nRangoBL);
+    //printf("nRangoBL : %d \n", nRangoBL);
     while (nivel_punteros > 0)
     {
         //No penjen blocs de punters.

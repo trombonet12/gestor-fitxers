@@ -20,7 +20,7 @@ int main(int argc, char **argv)
         unsigned int length = strlen(argv[2]);
 
         //Comprovam si ho hem d'escriure tot dins un inode
-        if (*argv[3] == '0')
+        if (atoi(argv[3]) == 0)
         {
             printf("Escribimos el texto \"%s\" en los offsets  9000, 209000, 30725000, 409605000 y 480000000 de un mismo inodo.\n", argv[2]);
             printf("Longitud texto: %d\n", length);
