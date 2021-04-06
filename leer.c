@@ -1,6 +1,6 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
 #include "ficheros.h"
-#define TAMBUFFER 4096
+#define TAMBUFFER 1024
 
 int main(int argc, char **argv)
 {
@@ -18,37 +18,42 @@ int main(int argc, char **argv)
         }
 
         unsigned char buffer_texto[TAMBUFFER];
+        unsigned char buffer_aux[TAMBUFFER];
         //Posam a 0 totes les posicions del buffer.
         memset(buffer_texto, 0, sizeof(buffer_texto));
+        memset(buffer_aux, 0, sizeof(buffer_aux));
         unsigned int leidos;
-        unsigned int total_leidos;
+        unsigned int total_leidos = 0;
         unsigned int offset = 0;
         char string[128];
 
         leidos = mi_read_f(atoi(argv[2]), buffer_texto, offset, TAMBUFFER);
         offset += TAMBUFFER;
-        sprintf(string, "Bytes leídos %d\n", leidos);
-        write(2, string, strlen(string));
-        total_leidos = leidos;
+        //sprintf(string, "Bytes leídos %d\n", leidos);
+        //write(2, string, strlen(string));
         while (leidos > 0)
         {
-            write(1, buffer_texto, leidos);
+            if (memcmp(buffer_texto, buffer_aux, leidos) != 0)
+            {
+                write(1, buffer_texto, leidos);
 
-            //Posam a 0 totes les posicions del buffer.
+                total_leidos += leidos;
+
+                //Ho imprimim per la sortida d'errors (2) per que no surti a l'arxiu si redireccionam l'output de la terminal.
+                //sprintf(string, "Bytes leídos %d\n", leidos);
+                //write(2, string, strlen(string));
+            }
             memset(buffer_texto, 0, sizeof(buffer_texto));
             leidos = mi_read_f(atoi(argv[2]), buffer_texto, offset, TAMBUFFER);
             offset += TAMBUFFER;
-            //Ho imprimim per la sortida d'errors (2) per que no surti a l'arxiu si redireccionam l'output de la terminal.
-            sprintf(string, "Bytes leídos %d\n", leidos);
-            write(2, string, strlen(string));
         }
         //Obtenim el tamany en bytes logics del inode en concret.
         //Ho imprimim per la sortida d'errors (2) per que no surti a l'arxiu si redireccionam l'output de la terminal.
         struct STAT p_stat;
         mi_stat_f(atoi(argv[2]), &p_stat);
-        sprintf(string,"Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
+        sprintf(string, "Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
         write(2, string, strlen(string));
-        sprintf(string,"Total_leidos: %d\n",total_leidos);
+        sprintf(string, "Total_leidos: %d\n", total_leidos);
         write(2, string, strlen(string));
 
         //Tancam l'enllaç amb el dispositiu virutal.

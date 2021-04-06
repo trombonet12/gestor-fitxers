@@ -107,6 +107,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     struct inodo inodo;
     leer_inodo(ninodo, &inodo);
     int leidos = 0;
+    printf("Numero inodo: %d \n", ninodo);
 
     if ((inodo.permisos & 4) != 4)
     {
@@ -137,13 +138,12 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         printf("Valor ultimoBL: %d\n", ultimoBL);
         printf("Valor desp1: %d\n", desp1);
         printf("Valor desp2: %d\n", desp2);
-        printf("Imprimeix??");
         int nbfisico;
         unsigned char buf_bloque[BLOCKSIZE];
 
         //El buffer a llegit es troba un ÚNIC bloc.
         if (primerBL == ultimoBL)
-        {   
+        {
             //Obtenim el valor del bloc físic associat al bloc lògic a llegir.
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
             //Bloc físic no existeix.
@@ -159,8 +159,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             {
                 //El bloc físic si que existeix.
                 //Lectura i increment del valor dels bytes llegits.
-                bread(nbfisico, buf_bloque);
-                leidos = nbytes;
+                leidos = bread(nbfisico, buf_bloque);
                 //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
                 memcpy(buf_original, buf_bloque, nbytes);
                 //Retonam la quantitat de bytes llegits del únic bloc llegit.
@@ -181,8 +180,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             {
                 //El bloc físic si que existeix.
                 //Tracament per al primer bloc lògic.
-                bread(nbfisico, buf_bloque);
-                leidos += nbytes;
+                leidos += bread(nbfisico, buf_bloque);
                 //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
                 memcpy(buf_original, buf_bloque, nbytes);
                 //Tractament pels blocs lògics intermitjos.
