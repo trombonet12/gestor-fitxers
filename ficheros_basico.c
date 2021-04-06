@@ -822,7 +822,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     }
     return ptr; //Nbfisico del bloc de dades.
 }
-
+/*
 int liberar_inodo(unsigned int ninodo)
 {
 
@@ -841,7 +841,7 @@ int liberar_inodo(unsigned int ninodo)
         //PROVISIONAL
         inodo.punterosDirectos[0] = SB.posPrimerInodoLibre;
         SB.posPrimerInodoLibre = ninodo;
-        escribir_inodo(inodo, inodo);
+        escribir_inodo(ninodo, inodo);
         bwrite(posSB, &SB);
 
         return ninodo;
@@ -852,11 +852,10 @@ int liberar_inodo(unsigned int ninodo)
     }
 }
 
-int mi_truncar_f(unsigned int ninodo, unsigned int nbytes){
+int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
+{
 
-struct  inodo inodo;
-leer_inodo(ninodo, &inodo);
-
-
-
+    struct inodo inodo;
+    leer_inodo(ninodo, &inodo);
 }
+*/
