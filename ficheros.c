@@ -25,10 +25,12 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         int desp1 = offset % BLOCKSIZE;
         //Calculam el desplaçament en el bloc per veure fins on arriben els nbytes escrits.
         int desp2 = (offset + nbytes - 1) % BLOCKSIZE;
+        /*
         printf("Valor primerBL: %d\n", primerBL);
         printf("Valor ultimoBL: %d\n", ultimoBL);
         printf("Valor desp1: %d\n", desp1);
         printf("Valor desp2: %d\n", desp2);
+        */
         int nbfisico;
         unsigned char buf_bloque[BLOCKSIZE];
 
@@ -107,7 +109,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     struct inodo inodo;
     leer_inodo(ninodo, &inodo);
     int leidos = 0;
-    printf("Numero inodo: %d \n", ninodo);
+    //printf("Numero inodo: %d \n", ninodo);
 
     if ((inodo.permisos & 4) != 4)
     {
@@ -134,10 +136,12 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         int desp1 = offset % BLOCKSIZE;
         //Calculam el desplaçament en el bloc per veure fins on arriben els nbytes escrits.
         int desp2 = (offset + nbytes - 1) % BLOCKSIZE;
+        /*
         printf("Valor primerBL: %d\n", primerBL);
         printf("Valor ultimoBL: %d\n", ultimoBL);
         printf("Valor desp1: %d\n", desp1);
         printf("Valor desp2: %d\n", desp2);
+        */
         int nbfisico;
         unsigned char buf_bloque[BLOCKSIZE];
 
