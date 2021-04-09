@@ -114,6 +114,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     if ((inodo.permisos & 4) != 4)
     {
         printf("No tienes permisos de lectura en el inodo indicado \n");
+        return leidos;
     }
     else
     {
@@ -163,9 +164,10 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             {
                 //El bloc físic si que existeix.
                 //Lectura i increment del valor dels bytes llegits.
-                leidos = bread(nbfisico, buf_bloque);
+                bread(nbfisico, buf_bloque);
+                leidos += nbytes;
                 //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
-                memcpy(buf_original, buf_bloque, nbytes);
+                memcpy(buf_original, buf_bloque + desp1, nbytes);
                 //Retonam la quantitat de bytes llegits del únic bloc llegit.
                 return leidos;
             }
@@ -184,9 +186,10 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             {
                 //El bloc físic si que existeix.
                 //Tracament per al primer bloc lògic.
-                leidos += bread(nbfisico, buf_bloque);
+                bread(nbfisico, buf_bloque);
+                leidos += BLOCKSIZE- desp1;
                 //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
-                memcpy(buf_original, buf_bloque, nbytes);
+                memcpy(buf_original, buf_bloque + desp1, BLOCKSIZE - desp1);
                 //Tractament pels blocs lògics intermitjos.
                 for (int i = primerBL + 1; i < ultimoBL; i++)
                 {
@@ -216,8 +219,9 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
                 else
                 {
                     //Bloc físic si existeix.
-                    leidos += bread(nbfisico, buf_bloque);
-                    memcpy(buf_original + (nbytes - desp2 - 1), buf_bloque, desp2 - 1);
+                    bread(nbfisico, buf_bloque);
+                    leidos += desp2 + 1;
+                    memcpy(buf_original + (nbytes - desp2 - 1), buf_bloque, desp2 + 1);
                     //Retonam la quantitat de bytes llegits de n blocs.
                     return leidos;
                 }
