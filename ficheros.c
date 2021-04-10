@@ -5,7 +5,6 @@
 //
 int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offset, unsigned int nbytes)
 {
-
     struct inodo inodo;
     leer_inodo(ninodo, &inodo);
     int numeroBytesEscritos = 0;
@@ -74,7 +73,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             //Escriptura del primer bloc lògic.
             memcpy(buf_bloque + desp1, buf_original, BLOCKSIZE - desp1);
             bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
-            numeroBytesEscritos += nbytes;
+            numeroBytesEscritos += BLOCKSIZE - desp1;
             //Escriptura dels blocs lògics intermitjos.
             for (int i = primerBL + 1; i < ultimoBL; i++)
             {
@@ -83,7 +82,8 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 1);
             bread(nbfisico, buf_bloque);
             memcpy(buf_bloque, buf_original + (nbytes - desp2 - 1), desp2 + 1);
-            numeroBytesEscritos += bwrite(nbfisico, buf_bloque);
+            bwrite(nbfisico, buf_bloque);
+            numeroBytesEscritos += desp2 + 1;
         }
     }
     //Llegim l'inode actualitzat.
@@ -292,6 +292,7 @@ int mi_chmod_f(unsigned int ninodo, unsigned char permisos)
     return EXIT_SUCCESS;
 }
 
+/*
 int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
 {
     struct inodo inodo;
@@ -339,3 +340,4 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
         }
     }
 }
+*/
