@@ -187,7 +187,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
                 //El bloc físic si que existeix.
                 //Tracament per al primer bloc lògic.
                 bread(nbfisico, buf_bloque);
-                leidos += BLOCKSIZE- desp1;
+                leidos += BLOCKSIZE - desp1;
                 //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
                 memcpy(buf_original, buf_bloque + desp1, BLOCKSIZE - desp1);
                 //Tractament pels blocs lògics intermitjos.
@@ -290,4 +290,52 @@ int mi_chmod_f(unsigned int ninodo, unsigned char permisos)
         return EXIT_FAILURE;
 
     return EXIT_SUCCESS;
+}
+
+int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
+{
+    struct inodo inodo;
+    leer_inodo(ninodo, &inodo);
+    //printf("Numero inodo: %d \n", ninodo);
+
+    //Comprovam que  tengui permisos de lectura
+    if ((inodo.permisos & 2) != 2)
+    {
+        printf("No tienes permisos de escritura en el inodo indicado \n");
+        return EXIT_FAILURE;
+    }
+    else
+    {   
+        //Comprovam que no trunquem mes del tamany en bytes logics
+        if (nbytes <= inodo.tamEnBytesLog)
+        {
+            int primerBL;
+            int liberados;
+            if ((nbytes % BLOCKSIZE) == 0)
+            {
+                primerBL = nbytes / BLOCKSIZE;
+            }
+            else
+            {
+                primerBL = nbytes / BLOCKSIZE + 1;
+            }
+
+            liberados = liberar_bloques_inodo(primerBL, &inodo);
+
+            inodo.mtime = time(NULL);
+            inodo.ctime = time(NULL);
+            inodo.tamEnBytesLog = nbytes;
+            inodo.numBloquesOcupados -= liberados;
+
+            escribir_inodo(ninodo, inodo);
+
+            return liberados;
+
+        }
+        else
+        {
+            printf("No se puede truncar más allá del tamaño en bytes lógicos del fichero/directorio. \n");
+            return EXIT_FAILURE;
+        }
+    }
 }
