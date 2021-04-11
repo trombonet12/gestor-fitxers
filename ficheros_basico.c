@@ -766,7 +766,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
                 inodo.ctime = time(NULL); // Data actual.
                 if (nivel_punteros == nRangoBL)
                 {
-                    //El bloc penja directament de l'inode.
+                    //El bloc pescritosenja directament de l'inode.
                     inodo.punterosIndirectos[nRangoBL - 1] = ptr;
                     printf("inodo.punterosIndirectos[%d]: %d \n", nRangoBL - 1, ptr);
                 }
@@ -832,28 +832,36 @@ int liberar_inodo(unsigned int ninodo)
     leer_inodo(ninodo, &inodo);
     //Aqui ja incrementam la quantitat de blocs lliure, mitjançant liberar_bloque()
     bloquesLiberados = liberar_bloques_inodo(0, &inodo);
+    //DEcrementam el valor de la varibale de l'inde amb el retorn de liberar_bloques_inodo.
     inodo.numBloquesOcupados -= bloquesLiberados;
+    //Comprovam que hem alliberat el blocs associats al inode.
     if (inodo.numBloquesOcupados == 0)
     {
+        //Actualitzam els atributs de l'inode.
         inodo.tipo = 'l';
         inodo.tamEnBytesLog = 0;
         bread(posSB, &SB); //Fer control d'erros.
+        //L'inode alliberat passa a ser el primer inode de la llista de inodes lliures
         inodo.punterosDirectos[0] = SB.posPrimerInodoLibre;
         SB.posPrimerInodoLibre = ninodo;
+        //Incrementam amb una unitat el nombre de inodes lliures.
         SB.cantInodosLibres++;
+        //Escriptura de l'inode i el SB actualitzat.
         escribir_inodo(ninodo, inodo);
         bwrite(posSB, &SB);
-
+        //Retornam el valor de l'inode actualitzat.
         return ninodo;
     }
     else
     {
+        //No hem alliberat correctament.
         return EXIT_FAILURE;
     }
 }
 
 int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
 {
+    //Declaracions de les varibles.
     unsigned int nivel_punteros;
     unsigned int indice;
     unsigned int ptr;
@@ -880,7 +888,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
         ultimoBL = inodo->tamEnBytesLog / BLOCKSIZE;
     }
 
-    memset(bufAux_punteros, 0, BLOCKSIZE);
+    memset(bufAux_punteros, 0, sizeof(bufAux_punteros));
     ptr = 0;
 
     //Buble que recorr tots els blocs logics

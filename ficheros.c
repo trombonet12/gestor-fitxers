@@ -235,9 +235,11 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
 int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
 {
     struct inodo inodo;
+    //Lectura de l'inode corresponent al STAT.
     if (leer_inodo(ninodo, &inodo) == EXIT_FAILURE)
         return EXIT_FAILURE;
 
+    //Inicialitzam el valor dels atributs de STAT corresponent.
     p_stat->tipo = inodo.tipo;
     p_stat->permisos = inodo.permisos;
     p_stat->atime = inodo.atime;
@@ -292,24 +294,24 @@ int mi_chmod_f(unsigned int ninodo, unsigned char permisos)
     return EXIT_SUCCESS;
 }
 
-/*
 int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
 {
     struct inodo inodo;
     leer_inodo(ninodo, &inodo);
     //printf("Numero inodo: %d \n", ninodo);
 
-    //Comprovam que  tengui permisos de lectura
+    //Comprovam que  tengui permisos de lectura.
     if ((inodo.permisos & 2) != 2)
     {
         printf("No tienes permisos de escritura en el inodo indicado \n");
         return EXIT_FAILURE;
     }
     else
-    {   
-        //Comprovam que no trunquem mes del tamany en bytes logics
+    {
+        //Comprovam que no trunquem mes del tamany en bytes logics.
         if (nbytes <= inodo.tamEnBytesLog)
-        {
+        {   
+            //Declarcions varibales.
             int primerBL;
             int liberados;
             if ((nbytes % BLOCKSIZE) == 0)
@@ -321,20 +323,20 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
                 primerBL = nbytes / BLOCKSIZE + 1;
             }
 
-            //Alliberam tot els blocs a partir de primerBL
+            //Alliberam tot els blocs a partir de primerBL.
             liberados = liberar_bloques_inodo(primerBL, &inodo);
 
-            //Actualitzam les dades del inode
+            //Actualitzam les dades del inode.
             inodo.mtime = time(NULL);
             inodo.ctime = time(NULL);
             inodo.tamEnBytesLog = nbytes;
             inodo.numBloquesOcupados -= liberados;
 
-            //Guardam les dades del inode
-            escribir_inodo(ninodo, inodo);
+            //Guardam les dades del inode.
+            if (escribir_inodo(ninodo, inodo) == EXIT_FAILURE)
+                return EXIT_FAILURE;
 
             return liberados;
-
         }
         else
         {
@@ -343,4 +345,3 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
         }
     }
 }
-*/
