@@ -822,7 +822,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     }
     return ptr; //Nbfisico del bloc de dades.
 }
-/*
+
 int liberar_inodo(unsigned int ninodo)
 {
 
@@ -838,9 +838,9 @@ int liberar_inodo(unsigned int ninodo)
         inodo.tipo = 'l';
         inodo.tamEnBytesLog = 0;
         bread(posSB, &SB); //Fer control d'erros.
-        //PROVISIONAL
         inodo.punterosDirectos[0] = SB.posPrimerInodoLibre;
         SB.posPrimerInodoLibre = ninodo;
+        SB.cantInodosLibres++;
         escribir_inodo(ninodo, inodo);
         bwrite(posSB, &SB);
 
@@ -848,14 +848,110 @@ int liberar_inodo(unsigned int ninodo)
     }
     else
     {
-        EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
 }
 
-int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
+int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
 {
+    unsigned int nivel_punteros;
+    unsigned int indice;
+    unsigned int ptr;
+    unsigned int nBL;
+    unsigned int ultimoBL;
+    int nRangoBL;
+    unsigned int bloques_punteros[3][NPUNTEROS];
+    unsigned int bufAux_punteros[BLOCKSIZE];
+    int ptr_nivel[3];
+    int indices[3];
+    int liberados = 0;
 
-    struct inodo inodo;
-    leer_inodo(ninodo, &inodo);
+    if (inodo->tamEnBytesLog == 0)
+    {
+        printf("El fichero esta vacio. \n");
+        return liberados;
+    }
+    if ((inodo->tamEnBytesLog % BLOCKSIZE) == 0)
+    {
+        ultimoBL = inodo->tamEnBytesLog / BLOCKSIZE - 1;
+    }
+    else
+    {
+        ultimoBL = inodo->tamEnBytesLog / BLOCKSIZE;
+    }
+
+    memset(bufAux_punteros, 0, BLOCKSIZE);
+    ptr = 0;
+
+    //Buble que recorr tots els blocs logics
+    for (nBL = primerBL; nBL == ultimoBL; nBL++)
+    {
+        nRangoBL = obtener_nRangoBL(*inodo, nBL, &ptr);
+        if (nRangoBL < 0)
+        {
+            return EXIT_FAILURE;
+        }
+        nivel_punteros = nRangoBL;
+
+        while (ptr > 0 && nivel_punteros > 0)
+        {
+            indice = obtener_indice(nBL, nivel_punteros);
+            if (indice == 0 || nBL == primerBL)
+            {
+                //Llegim el dispositiu ja que no es troba en el buffer
+                bread(ptr, bloques_punteros[nivel_punteros - 1]);
+            }
+            ptr_nivel[nivel_punteros - 1] = ptr;
+            indices[nivel_punteros - 1] = indice;
+            ptr = bloques_punteros[nivel_punteros - 1][indice];
+            nivel_punteros--;
+        }
+
+        //Si existeix un bloc de dades
+        if (ptr > 0)
+        {
+            liberar_bloque(ptr);
+            liberados++;
+
+            if (nRangoBL == 0)
+            {
+                //Es un punter directe
+                inodo->punterosDirectos[nBL] = 0;
+            }
+            else
+            {
+                nivel_punteros = 1;
+                while (nivel_punteros <= nRangoBL)
+                {
+                    indice = indices[nivel_punteros - 1];
+                    bloques_punteros[nivel_punteros - 1][indice] = 0;
+                    ptr = ptr_nivel[nivel_punteros - 1];
+
+                    if (memcmp(bloques_punteros[nivel_punteros - 1], bufAux_punteros, BLOCKSIZE) == 0)
+                    {
+                        //No penjen mes blocs ocupats per tant queda alliberar el bloc de punters
+                        liberar_bloque(ptr);
+                        liberados++;
+
+                        //Aqui es pot afegir una millora per botar-nos els blocs que no fa falta explorar
+
+                        if (nivel_punteros == nRangoBL)
+                        {
+                            inodo->punterosIndirectos[nRangoBL - 1] = 0;
+                        }
+                        nivel_punteros++;
+                    }
+                    else
+                    {
+                        //Escrivim en el fitxer el bloc de punters modificat
+                        bwrite(ptr, bloques_punteros[nivel_punteros]);
+
+                        //Hem de sortir del bucle ja que no es necessari alliberar els blocs dels nivells superiors
+                        nivel_punteros = nRangoBL + 1;
+                    }
+                }
+            }
+        }
+    }
+    return liberados;
 }
-*/
