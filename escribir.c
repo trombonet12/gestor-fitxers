@@ -34,8 +34,10 @@ int main(int argc, char **argv)
             {
                 printf("Nº inodo reservado: %d\n", ninodo);
                 printf("Offset: %d\n", offset[i]);
-                int nbfisico = mi_write_f(ninodo, argv[2], offset[i], length);
-                printf("Numero de Bytes escritos: %d\n",nbfisico );
+                int escritos = mi_write_f(ninodo, argv[2], offset[i], length);
+                fprintf(stderr,"Numero de Bytes escritos: %d\n",escritos);
+                int leidos = mi_read_f(ninodo, argv[2], offset[i],length);
+                fprintf(stderr, "Numero de bytes leidos: %d \n: ", leidos);
                 mi_stat_f(ninodo, &p_stat);
                 fprintf(stderr,"Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
                 fprintf(stderr,"Num Bloques Ocupados: %d \n\n", p_stat.numBloquesOcupados);
@@ -52,7 +54,10 @@ int main(int argc, char **argv)
                 ninodo = reservar_inodo('f', 6);
                 printf("Nº inodo reservado: %d\n", ninodo);
                 printf("Offset: %d\n", offset[i]);
-                printf("Numero de Bytes escritos: %d\n", mi_write_f(ninodo, argv[2], offset[i], length));
+                int escritos = mi_write_f(ninodo, argv[2], offset[i], length);
+                fprintf(stderr,"Numero de Bytes escritos: %d\n",escritos);
+                int leidos = mi_read_f(ninodo, argv[2], offset[i],length);
+                fprintf(stderr, "Numero de bytes leidos: %d \n: ", leidos);
                 mi_stat_f(ninodo, &p_stat);
                 printf("Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
                 printf("Num Bloques Ocupados: %d \n\n", p_stat.numBloquesOcupados);
