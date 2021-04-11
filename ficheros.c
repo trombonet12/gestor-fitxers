@@ -321,13 +321,16 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
                 primerBL = nbytes / BLOCKSIZE + 1;
             }
 
+            //Alliberam tot els blocs a partir de primerBL
             liberados = liberar_bloques_inodo(primerBL, &inodo);
 
+            //Actualitzam les dades del inode
             inodo.mtime = time(NULL);
             inodo.ctime = time(NULL);
             inodo.tamEnBytesLog = nbytes;
             inodo.numBloquesOcupados -= liberados;
 
+            //Guardam les dades del inode
             escribir_inodo(ninodo, inodo);
 
             return liberados;
