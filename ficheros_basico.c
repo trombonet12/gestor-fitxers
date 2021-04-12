@@ -756,7 +756,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             //Realitzam una consulta i no hi ha cap bloc de indexos.
             if (reservar == 0)
             {
-                return EXIT_FAILURE;
+                return -1;
             }
             else
             {
@@ -795,7 +795,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
         //Error, tot està inicialitzat a 0 i feim un consultar.
         if (reservar == 0)
         {
-            return EXIT_FAILURE;
+            return -1;
         }
         else
         {

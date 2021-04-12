@@ -151,10 +151,11 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         {
             //Obtenim el valor del bloc físic associat al bloc lògic a llegir.
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
+            //printf("Valor nbfisico: %d\n",nbfisico);
             //Bloc físic no existeix.
             if (nbfisico == -1)
             {
-                printf("El bloc de datos a leer no existe \n");
+                //printf("El bloc de datos a leer no existe \n");
                 //No llegim res, però si augmentam el valor del bytes llegits (tamnay del bloc).
                 leidos = BLOCKSIZE;
                 //Retonam la quantitat de bytes llegits del únic bloc llegit.
@@ -175,10 +176,11 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         else
         {
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
+            //printf("Valor nbfisico: %d\n",nbfisico);
             //Bloc físic no existeix.
             if (nbfisico == -1)
             {
-                printf("El bloc de datos a leer no existe \n");
+                //printf("El bloc de datos a leer no existe \n");
                 //No llegim res, però si augmentam el valor del bytes llegits (tamnay del bloc).
                 leidos += BLOCKSIZE;
             }
@@ -194,10 +196,11 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
                 for (int i = primerBL + 1; i < ultimoBL; i++)
                 {
                     nbfisico = traducir_bloque_inodo(ninodo, i, 0);
+                    //printf("Valor nbfisico: %d\n",nbfisico);
                     //Bloc físic no existeix.
                     if (nbfisico == -1)
                     {
-                        printf("El bloc de datos a ller no existe \n");
+                        //printf("El bloc de datos a leer no existe \n");
                         leidos += BLOCKSIZE;
                     }
                     else
@@ -209,6 +212,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
                 }
                 //Tractamnet per al darrer bloc lògic a llegir.
                 nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 0);
+                //printf("Valor nbfisico: %d\n",nbfisico);
                 //Bloc físic no existeix.
                 if (nbfisico == -1)
                 {

@@ -32,16 +32,16 @@ int main(int argc, char **argv)
         //write(2, string, strlen(string));
         while (leidos > 0)
         {               
-            if (memcmp(buffer_texto, buffer_aux, TAMBUFFER) != 0)
-            {
+            //if (memcmp(buffer_texto, buffer_aux, TAMBUFFER) != 0)
+            //{
                 write(1, buffer_texto, leidos);
-                memset(buffer_texto, 0, TAMBUFFER);
+                //memset(buffer_texto, 0, TAMBUFFER);
                 
 
                 //Ho imprimim per la sortida d'errors (2) per que no surti a l'arxiu si redireccionam l'output de la terminal.
                 //sprintf(string, "Bytes leídos %d\n", leidos);
                 //write(2, string, strlen(string));
-            }
+            //}
             memset(buffer_texto,0,TAMBUFFER);
             total_leidos += leidos;
             leidos = mi_read_f(atoi(argv[2]), buffer_texto, offset, TAMBUFFER);

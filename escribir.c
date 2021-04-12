@@ -22,11 +22,12 @@ int main(int argc, char **argv)
         //Comprovam si ho hem d'escriure tot dins un inode
         if (atoi(argv[3]) == 0)
         {
-            printf("Escribimos el texto \"%s\" en los offsets  9000, 209000, 30725000, 409605000 y 480000000 de un mismo inodo.\n", argv[2]);
-            printf("Longitud texto: %d\n", length);
+            //printf("Escribimos el texto \"%s\" en los offsets  9000, 209000, 30725000, 409605000 y 480000000 de un mismo inodo.\n", argv[2]);
+            printf("Longitud texto: %d\n\n", length);
 
             unsigned int ninodo;
             struct STAT p_stat;
+            unsigned char buffer_texto[length];
 
             ninodo = reservar_inodo('f', 6);
 
@@ -35,19 +36,25 @@ int main(int argc, char **argv)
                 printf("Nº inodo reservado: %d\n", ninodo);
                 printf("Offset: %d\n", offset[i]);
                 int escritos = mi_write_f(ninodo, argv[2], offset[i], length);
-                fprintf(stderr,"Numero de Bytes escritos: %d\n",escritos);
-                int leidos = mi_read_f(ninodo, argv[2], offset[i],length);
-                fprintf(stderr, "Numero de bytes leidos: %d \n: ", leidos);
+                fprintf(stderr, "Numero de Bytes escritos: %d\n", escritos);
+                /*memset(buffer_texto,0,length);
+                int leidos = mi_read_f(ninodo, buffer_texto, offset[i],length);
+                printf("\n");
+                write(1, buffer_texto, length);
+                printf("\n");
+                fprintf(stderr, "Numero de bytes leidos: %d \n: ", leidos);*/
                 mi_stat_f(ninodo, &p_stat);
-                fprintf(stderr,"Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
-                fprintf(stderr,"Num Bloques Ocupados: %d \n\n", p_stat.numBloquesOcupados);
+                fprintf(stderr, "Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
+                fprintf(stderr, "Num Bloques Ocupados: %d \n\n", p_stat.numBloquesOcupados);
             }
         }
         else
         {
-            printf("Escribimos el texto \"%s\" en los offsets  9000, 209000, 30725000, 409605000 y 480000000 de inodos diferentes.\n", argv[2]);
+            //printf("Escribimos el texto \"%s\" en los offsets  9000, 209000, 30725000, 409605000 y 480000000 de inodos diferentes.\n", argv[2]);
+            printf("Longitud texto: %d\n\n", length);
             unsigned int ninodo;
             struct STAT p_stat;
+            unsigned char buffer_texto[length];
 
             for (int i = 0; i < 5; i++)
             {
@@ -55,9 +62,13 @@ int main(int argc, char **argv)
                 printf("Nº inodo reservado: %d\n", ninodo);
                 printf("Offset: %d\n", offset[i]);
                 int escritos = mi_write_f(ninodo, argv[2], offset[i], length);
-                fprintf(stderr,"Numero de Bytes escritos: %d\n",escritos);
-                int leidos = mi_read_f(ninodo, argv[2], offset[i],length);
-                fprintf(stderr, "Numero de bytes leidos: %d \n: ", leidos);
+                fprintf(stderr, "Numero de Bytes escritos: %d\n", escritos);
+                /*memset(buffer_texto,0,length);
+                int leidos = mi_read_f(ninodo, buffer_texto, offset[i],length);
+                printf("\n");
+                write(1, buffer_texto, length);
+                printf("\n");
+                fprintf(stderr, "Numero de bytes leidos: %d \n: ", leidos);*/
                 mi_stat_f(ninodo, &p_stat);
                 printf("Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
                 printf("Num Bloques Ocupados: %d \n\n", p_stat.numBloquesOcupados);
