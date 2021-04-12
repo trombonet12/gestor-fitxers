@@ -24,6 +24,8 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         int desp1 = offset % BLOCKSIZE;
         //Calculam el desplaçament en el bloc per veure fins on arriben els nbytes escrits.
         int desp2 = (offset + nbytes - 1) % BLOCKSIZE;
+        //fprintf(stderr, "primerBL %d \n" , primerBL);
+        //fprintf(stderr, "ultimoBL: %d \n", ultimoBL);
         /*
         printf("Valor primerBL: %d\n", primerBL);
         printf("Valor ultimoBL: %d\n", ultimoBL);
@@ -77,6 +79,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             //Escriptura dels blocs lògics intermitjos.
             for (int i = primerBL + 1; i < ultimoBL; i++)
             {
+                nbfisico = traducir_bloque_inodo(ninodo, i, 1);
                 numeroBytesEscritos += bwrite(nbfisico, buf_original + (BLOCKSIZE - desp1) + (i - primerBL - 1) * BLOCKSIZE);
             }
             nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 1);
@@ -157,7 +160,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             {
                 //printf("El bloc de datos a leer no existe \n");
                 //No llegim res, però si augmentam el valor del bytes llegits (tamnay del bloc).
-                leidos = BLOCKSIZE;
+                leidos = nbytes;
                 //Retonam la quantitat de bytes llegits del únic bloc llegit.
                 return leidos;
             }
@@ -182,7 +185,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             {
                 //printf("El bloc de datos a leer no existe \n");
                 //No llegim res, però si augmentam el valor del bytes llegits (tamnay del bloc).
-                leidos += BLOCKSIZE;
+                leidos += BLOCKSIZE - desp1;
             }
             else
             {
@@ -216,7 +219,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
                 //Bloc físic no existeix.
                 if (nbfisico == -1)
                 {
-                    leidos += BLOCKSIZE;
+                    leidos += desp2 +1;
                     //Retonam la quantitat de bytes llegits de n blocs.
                     return leidos;
                 }
