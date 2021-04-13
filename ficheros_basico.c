@@ -489,9 +489,9 @@ int liberar_bloque(unsigned int nbloque)
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    printf("Cantidad de bloques libres antes de liberar el bloque: %d\n", SB.cantBloquesLibres);
+    //printf("Cantidad de bloques libres antes de liberar el bloque: %d\n", SB.cantBloquesLibres);
     SB.cantBloquesLibres++;
-    printf("Cantidad de bloques libres despues de liberar el  bloque: %d\n", SB.cantBloquesLibres);
+    //printf("Cantidad de bloques libres despues de liberar el  bloque: %d\n", SB.cantBloquesLibres);
 
     if (bwrite(posSB, &SB) == BLOCKSIZE)
     {
@@ -832,8 +832,16 @@ int liberar_inodo(unsigned int ninodo)
     leer_inodo(ninodo, &inodo);
     //Aqui ja incrementam la quantitat de blocs lliure, mitjançant liberar_bloque()
     bloquesLiberados = liberar_bloques_inodo(0, &inodo);
+    fflush(stdout);
+    if (bloquesLiberados == -1)
+    {
+        printf("ERROR: No se ha podido liberar los bloques.\n");
+        return -1;
+    }
+    printf("bloquesLiberados: %d \n", bloquesLiberados);
     //DEcrementam el valor de la varibale de l'inde amb el retorn de liberar_bloques_inodo.
     inodo.numBloquesOcupados -= bloquesLiberados;
+    printf("numBloquesOcupados: %d\n", inodo.numBloquesOcupados);
     //Comprovam que hem alliberat el blocs associats al inode.
     if (inodo.numBloquesOcupados == 0)
     {
@@ -854,8 +862,9 @@ int liberar_inodo(unsigned int ninodo)
     }
     else
     {
+        printf("El numero de blocs ocupats no es 0\n");
         //No hem alliberat correctament.
-        return EXIT_FAILURE;
+        return -1;
     }
 }
 
@@ -865,7 +874,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
     unsigned int nivel_punteros;
     unsigned int indice;
     unsigned int ptr;
-    unsigned int nBL;
+    //unsigned int nBL;
     unsigned int ultimoBL;
     int nRangoBL;
     unsigned int bloques_punteros[3][NPUNTEROS];
@@ -888,16 +897,23 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
         ultimoBL = inodo->tamEnBytesLog / BLOCKSIZE;
     }
 
-    memset(bufAux_punteros, 0, sizeof(bufAux_punteros));
+    printf("liberar_bloques_inodo()→ primer BL: %d, último BL: %d\n", primerBL, ultimoBL);
+
+    memset(bufAux_punteros, 0, BLOCKSIZE);
     ptr = 0;
+    //printf("Valor ptr: %d\n", ptr);
+
 
     //Buble que recorr tots els blocs logics
-    for (nBL = primerBL; nBL == ultimoBL; nBL++)
+    for (int nBL = primerBL; nBL <= ultimoBL; nBL++)
     {
+        //printf("Valor nBL: %d\n", nBL);
+        //printf("Valor nRangoBL: %d\n", nRangoBL);
         nRangoBL = obtener_nRangoBL(*inodo, nBL, &ptr);
         if (nRangoBL < 0)
         {
-            return EXIT_FAILURE;
+            printf("ERROR: No se ha podido obtener el rango del BL\n");
+            return -1;
         }
         nivel_punteros = nRangoBL;
 
@@ -915,6 +931,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
             nivel_punteros--;
         }
 
+        //printf("Valor ptr: %d \n", ptr);
         //Si existeix un bloc de dades
         if (ptr > 0)
         {
