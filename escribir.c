@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
             unsigned int ninodo;
             struct STAT p_stat;
-            unsigned char buffer_texto[length];
+            //unsigned char buffer_texto[length];
 
             ninodo = reservar_inodo('f', 6);
 
@@ -54,7 +54,7 @@ int main(int argc, char **argv)
             printf("Longitud texto: %d\n\n", length);
             unsigned int ninodo;
             struct STAT p_stat;
-            unsigned char buffer_texto[length];
+            //unsigned char buffer_texto[length];
 
             for (int i = 0; i < 5; i++)
             {
