@@ -974,7 +974,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
                     else
                     {
                         //Escrivim en el fitxer el bloc de punters modificat
-                        bwrite(ptr, bloques_punteros[nivel_punteros]);
+                        bwrite(ptr, bloques_punteros[nivel_punteros-1]);
 
                         //Hem de sortir del bucle ja que no es necessari alliberar els blocs dels nivells superiors
                         nivel_punteros = nRangoBL + 1;
