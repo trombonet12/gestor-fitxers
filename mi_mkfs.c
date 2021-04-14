@@ -10,7 +10,7 @@ int main(int argc, char **argv)
     //Establim enllaç amb el dispositiu virtual.
     if (bmount(argv[1]))
     {
-        printf("Operació realitzada correctament \n");
+        //printf("Operació realitzada correctament \n");
     }
     else
     {
@@ -33,11 +33,12 @@ int main(int argc, char **argv)
     tamAI(atoi(argv[2]) / 4);
     initSB(atoi(argv[2]), atoi(argv[2]) / 4);
     initMB();
-    printf("PRINCIPI INIT AI\n");
+    //printf("PRINCIPI INIT AI\n");
     initAI();
-    printf("FINAL INIT AI\n");
+    //printf("FINAL INIT AI\n");
     
-    printf("Creamos directorio raiz: %d \n", reservar_inodo('d', '7'));
+    //printf("Creamos directorio raiz: %d \n", reservar_inodo('d', '7'));
+    reservar_inodo('d', '7');
     
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)

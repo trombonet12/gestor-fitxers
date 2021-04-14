@@ -21,7 +21,7 @@ int tamMB(unsigned int nbloques)
         //Si no és congruent amb mòdul 0, afegim un bloc més.
         tamanoMB = (auxiliar / BLOCKSIZE) + 1;
     }
-    printf("El tamaño del Mapa de Bits es: %d \n", tamanoMB); //Print clarificatiu
+    //printf("El tamaño del Mapa de Bits es: %d \n", tamanoMB); //Print clarificatiu
     return tamanoMB;
 }
 
@@ -42,7 +42,7 @@ int tamAI(unsigned int ninodos)
         //Si no és congruent amb mòdul 0, afegim un bloc més.
         tamanoAI = (ninodos / auxiliar) + 1;
     }
-    printf("El tamaño del array de Inodos es: %d \n", tamanoAI); //Print clarificatiu)
+    //printf("El tamaño del array de Inodos es: %d \n", tamanoAI); //Print clarificatiu)
     return tamanoAI;
 }
 
@@ -88,14 +88,14 @@ void ponerAUnoBits()
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres); //Print clarificatiu
+    //printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres); //Print clarificatiu
     //Càlcul del número de blocs que representen els MetaDatos.
     int numBloquesMetaDatos = tamAI(SB.totInodos) + tamMB(SB.totBloques) + tamSB;
     //Càlcul del nombre de blocs SENCERS a posar a 1.
     int blocsMD = (numBloquesMetaDatos / 8) / BLOCKSIZE;
     //Declaració d'una varibale buffer que representarà els blocs SENCERS  a posar a 1.
     unsigned char bufferMB[BLOCKSIZE];
-    printf("Num de blocs de SENCERS dels MD a posar a 1: %d\n", blocsMD); //Print Clarificatiu
+    //printf("Num de blocs de SENCERS dels MD a posar a 1: %d\n", blocsMD); //Print Clarificatiu
 
     //Si tenim com a mínim un bloc SENCER  a posar a 1.
     if (blocsMD > 0)
@@ -118,8 +118,8 @@ void ponerAUnoBits()
     int bytesMD = (numBloquesMetaDatos / 8) % 1024;
     //Càlcul del nombre de bits a posar a un d'un byte.
     int bitesMD = numBloquesMetaDatos % 8;
-    printf("Num de blocs de bytesMD: %d\n", bytesMD); //Print Clarificatiu
-    printf("Num de blocs de bitesMD: %d\n", bitesMD); //Print Clarificatiu
+    //printf("Num de blocs de bytesMD: %d\n", bytesMD); //Print Clarificatiu
+    //printf("Num de blocs de bitesMD: %d\n", bitesMD); //Print Clarificatiu
     //Posam a 1 els bytes calculats anteriorment
     for (int i = 0; i < bytesMD; i++)
     {
@@ -143,11 +143,11 @@ void ponerAUnoBits()
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);   //Prints clarificatius.
-    printf("Cantidad de bloques MetaDatos: %d\n", numBloquesMetaDatos); //Prints clarificatius.
+    //printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);   //Prints clarificatius.
+    //printf("Cantidad de bloques MetaDatos: %d\n", numBloquesMetaDatos); //Prints clarificatius.
     //A la quantitat de blocs lliures (introduïts per teclat), li restam els associats als MetaDatos.
     SB.cantBloquesLibres = SB.cantBloquesLibres - numBloquesMetaDatos;
-    printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres); //Prints clarificatius.
+    //printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres); //Prints clarificatius.
     //Tornam a esciure el SB amb les atributs que hem modificat.
     if (bwrite(posSB, &SB) < 0)
     {
@@ -186,7 +186,7 @@ int initMB()
         }
         blocs++; //Variable clarificativa
     }
-    printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu.
+    //printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu.
 
     //Salvaguardam el SuperBloc dins el Dispositiu Virtual.
     if (bwrite(posSB, &SB) == BLOCKSIZE)
@@ -823,6 +823,7 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     return ptr; //Nbfisico del bloc de dades.
 }
 
+//Allibera tot el contigut del inode
 int liberar_inodo(unsigned int ninodo)
 {
 
@@ -868,13 +869,14 @@ int liberar_inodo(unsigned int ninodo)
     }
 }
 
+//Allibera tot el contigut a partir d'un bloc logic
 int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
 {
     //Declaracions de les varibles.
     unsigned int nivel_punteros;
     unsigned int indice;
     unsigned int ptr;
-    //unsigned int nBL;
+    unsigned int nBL;
     unsigned int ultimoBL;
     int nRangoBL;
     unsigned int bloques_punteros[3][NPUNTEROS];
@@ -899,13 +901,13 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
 
     printf("liberar_bloques_inodo()→ primer BL: %d, último BL: %d\n", primerBL, ultimoBL);
 
-    memset(bufAux_punteros, 0, BLOCKSIZE);
+    memset(bufAux_punteros, 0, sizeof(bufAux_punteros));
     ptr = 0;
     //printf("Valor ptr: %d\n", ptr);
 
 
     //Buble que recorr tots els blocs logics
-    for (int nBL = primerBL; nBL <= ultimoBL; nBL++)
+    for (nBL = primerBL; nBL <= ultimoBL; nBL++)
     {
         //printf("Valor nBL: %d\n", nBL);
         //printf("Valor nRangoBL: %d\n", nRangoBL);
@@ -938,6 +940,8 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
             liberar_bloque(ptr);
             liberados++;
 
+            printf("liberar_bloques_inodo()→ liberado BF %d de datos para BL %d\n",ptr,nBL);
+
             if (nRangoBL == 0)
             {
                 //Es un punter directe
@@ -957,6 +961,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
                         //No penjen mes blocs ocupats per tant queda alliberar el bloc de punters
                         liberar_bloque(ptr);
                         liberados++;
+                        printf("liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d\n",ptr,nivel_punteros,nBL);
 
                         //Aqui es pot afegir una millora per botar-nos els blocs que no fa falta explorar
 

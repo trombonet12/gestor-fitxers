@@ -24,7 +24,7 @@ int main(int argc, char **argv)
             if (liberar_inodo(atoi(argv[2])) == -1)
             {
                 printf("ERROR: liberar inodo no se ha ejecutado correctamente\n");
-                exit(0);
+                //exit(0);
             }
         }
         else
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
             //Alliberam nbytes del inode
             liberados = mi_truncar_f(atoi(argv[2]), atoi(argv[3]));
 
-            printf("Liberados: %d\n", liberados);
+            printf("Liberados: %d\n\n", liberados);
         }
 
         //Imprimim les dades del inode
