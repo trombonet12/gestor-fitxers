@@ -9,6 +9,7 @@
 #include <string.h>     //strerror()
  
 #define BLOCKSIZE 1024 // bytes
+#define ERROR -1
  
 int bmount(const char *camino);
 int bumount();

@@ -21,7 +21,6 @@ int tamMB(unsigned int nbloques)
         //Si no és congruent amb mòdul 0, afegim un bloc més.
         tamanoMB = (auxiliar / BLOCKSIZE) + 1;
     }
-    //printf("El tamaño del Mapa de Bits es: %d \n", tamanoMB); //Print clarificatiu
     return tamanoMB;
 }
 
@@ -42,7 +41,6 @@ int tamAI(unsigned int ninodos)
         //Si no és congruent amb mòdul 0, afegim un bloc més.
         tamanoAI = (ninodos / auxiliar) + 1;
     }
-    //printf("El tamaño del array de Inodos es: %d \n", tamanoAI); //Print clarificatiu)
     return tamanoAI;
 }
 
@@ -64,38 +62,36 @@ int initSB(unsigned int nbloques, unsigned int ninodos)
     SB.totBloques = nbloques;
     SB.totInodos = ninodos;
 
-    if (bwrite(posSB, &SB) == BLOCKSIZE)
+    if (bwrite(posSB, &SB) == ERROR)
     {
-        //printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
-        return 0;
-    }
-    else
-    {
+        //Error amb ñ'escriptura
         return fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
+
+    return 0;
 }
 
 //Mètode que escriu a 1 el bits del MB associats als MetaDatos de manera eficient.
-void ponerAUnoBits()
+int ponerAUnoBits()
 {
     //Decleració d'una varible strcut superbloque.
     struct superbloque SB;
 
     //Llegim el SuperBloc
-    if (bread(posSB, &SB) < 0)
+    if (bread(posSB, &SB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
 
-    //printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres); //Print clarificatiu
     //Càlcul del número de blocs que representen els MetaDatos.
     int numBloquesMetaDatos = tamAI(SB.totInodos) + tamMB(SB.totBloques) + tamSB;
     //Càlcul del nombre de blocs SENCERS a posar a 1.
     int blocsMD = (numBloquesMetaDatos / 8) / BLOCKSIZE;
     //Declaració d'una varibale buffer que representarà els blocs SENCERS  a posar a 1.
     unsigned char bufferMB[BLOCKSIZE];
-    //printf("Num de blocs de SENCERS dels MD a posar a 1: %d\n", blocsMD); //Print Clarificatiu
 
     //Si tenim com a mínim un bloc SENCER  a posar a 1.
     if (blocsMD > 0)
@@ -106,9 +102,11 @@ void ponerAUnoBits()
         for (int i = SB.posPrimerBloqueMB; i < (SB.posPrimerBloqueMB + blocsMD); i++)
         {
             //Control de errors durant l'escriptura.
-            if (bwrite(i, bufferMB) < 0)
+            if (bwrite(i, bufferMB) == ERROR)
             {
+                //Error amb l'escriptura
                 fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                return ERROR;
             }
         }
     }
@@ -118,8 +116,6 @@ void ponerAUnoBits()
     int bytesMD = (numBloquesMetaDatos / 8) % 1024;
     //Càlcul del nombre de bits a posar a un d'un byte.
     int bitesMD = numBloquesMetaDatos % 8;
-    //printf("Num de blocs de bytesMD: %d\n", bytesMD); //Print Clarificatiu
-    //printf("Num de blocs de bitesMD: %d\n", bitesMD); //Print Clarificatiu
     //Posam a 1 els bytes calculats anteriorment
     for (int i = 0; i < bytesMD; i++)
     {
@@ -138,21 +134,24 @@ void ponerAUnoBits()
         bufferAux[i] = 0;
     }
     //Escriptura del bufferAux a la posició corresponent.
-    if (bwrite(SB.posPrimerBloqueMB + blocsMD, bufferAux) < 0)
+    if (bwrite(SB.posPrimerBloqueMB + blocsMD, bufferAux) == ERROR)
     {
+        //Error amb l'escriptura
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
 
-    //printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres);   //Prints clarificatius.
-    //printf("Cantidad de bloques MetaDatos: %d\n", numBloquesMetaDatos); //Prints clarificatius.
     //A la quantitat de blocs lliures (introduïts per teclat), li restam els associats als MetaDatos.
     SB.cantBloquesLibres = SB.cantBloquesLibres - numBloquesMetaDatos;
-    //printf("Cantidad de bloques libres: %d\n", SB.cantBloquesLibres); //Prints clarificatius.
     //Tornam a esciure el SB amb les atributs que hem modificat.
-    if (bwrite(posSB, &SB) < 0)
+    if (bwrite(posSB, &SB) == ERROR)
     {
+        //Error amb l'escriptura
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
+
+    return EXIT_SUCCESS;
 }
 
 //Mètode que inicialitza el MB.
@@ -164,14 +163,11 @@ int initMB()
     int blocs = 0; //Variable clarificativa
 
     //Llegim el SuperBloc
-    if (bread(posSB, &SB))
-    {
-        //Lectura realitzada correctament.
-    }
-    else
+    if (bread(posSB, &SB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
 
     //Preparam el buffer per escriure 0s.
@@ -180,22 +176,21 @@ int initMB()
     for (int i = SB.posPrimerBloqueMB; i <= SB.posUltimoBloqueMB; i++)
     {
         //Control de errors durant l'escriptura.
-        if (bwrite(i, buffer) < 0)
+        if (bwrite(i, buffer) == ERROR)
         {
+            //Error amb l'escriptura
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            return ERROR;
         }
         blocs++; //Variable clarificativa
     }
-    //printf("Num de blocs escrits: %d\n", blocs); //Print Clarificatiu.
 
     //Salvaguardam el SuperBloc dins el Dispositiu Virtual.
-    if (bwrite(posSB, &SB) == BLOCKSIZE)
+    if (bwrite(posSB, &SB) == ERROR)
     {
-        //printf("Escriptura del superbloc al dispositu virtual realitzat correctament.\n");
-    }
-    else
-    {
+        //Error amb l'escriptura
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
     ponerAUnoBits();
     return 0;
@@ -207,15 +202,11 @@ int initAI()
     //Declaració e incialització variable Superbloque.
     struct superbloque SB;
     //Llegim el SuperBloc
-    if (bread(posSB, &SB))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del Superbloque realitzada correctament \n");
-    }
-    else
+    if (bread(posSB, &SB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
     //Declaració variable inode.
     struct inodo inodos[BLOCKSIZE / INODOSIZE];
@@ -243,19 +234,13 @@ int initAI()
                     break;
                 }
             }
-            //printf("%d ", inodos[j].punterosDirectos[0]); //Print Clarificatiu
-            //printf("\n");
         }
         //Escriptura del i-bloc corresponent associat
-        if (bwrite(i, inodos) == BLOCKSIZE)
-        {
-            //Lectura realitzada correctament.
-            //printf("Escriptura del bloc associat als 8 inodes corresponents realitzat correctament \n");
-        }
-        else
+        if (bwrite(i, inodos) == ERROR)
         {
             //Error en la lectura.
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            return ERROR;
         }
     }
     return 0;
@@ -266,74 +251,51 @@ int escribir_bit(unsigned int nbloque, unsigned int bit)
     //Declaració e incialització variable Superbloque.
     struct superbloque SB;
     //Llegim el SuperBloc
-    if (bread(posSB, &SB))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del Superbloque realitzada correctament \n");
-    }
-    else
+    if (bread(posSB, &SB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
 
     //Declaram les variables necesaries
     int posbyte = nbloque / 8;
-    //printf("El valor de posbyte és: %d \n", posbyte);
     int posbit = nbloque % 8;
-    //printf("El valor de posbit és: %d \n", posbit);
     int nbloqueMB = posbyte / BLOCKSIZE;
-    //printf("Valor de nbloqueMB %d \n", nbloqueMB);
     int nbloqueabs = SB.posPrimerBloqueMB + nbloqueMB;
-    //printf("Valor de nbloqueabs %d \n", nbloqueabs);
     unsigned char bufferMB[BLOCKSIZE];
 
     //LLegim el bloc corresponent
-    if (bread(nbloqueabs, bufferMB))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del bloque realitzada correctament \n");
-    }
-    else
+    if (bread(nbloqueabs, bufferMB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
 
     //Obtenir la posicio dins el rang d'un bloc
     posbyte = posbyte % BLOCKSIZE;
-    //printf("Nou valor de posbyte %d \n", posbyte);
     //Preparam La mascara
     unsigned char mascara = 128;
 
     mascara >>= posbit;
-    //printf("Nou valor de mascara despres daplicar mascara ==> posbit és: %d \n", mascara);
     //Realtzam la modificacio
     if (bit == 0)
     {
-        //printf("Posam a 0 el bit \n"); //Print Clarificatiu
         bufferMB[posbyte] &= ~mascara;
-        //printf("Valor de bufferMB[posbyte] es: %d \n", bufferMB[posbyte]);
     }
     else if (bit == 1)
     {
-        //printf("Posam a 1 el bit \n"); //Print Clarificatiu
         bufferMB[posbyte] |= mascara;
-        //printf("Valor de bufferMB[posbyte] es: %d  \n", bufferMB[posbyte]);
     }
     //Guardam el bloc modificat.
-    if (bwrite(nbloqueabs, bufferMB) == BLOCKSIZE)
-    {
-        //Escriptura correcta.
-        //printf("Lectura del Superbloque realitzada correctament \n");
-        return EXIT_SUCCESS;
-    }
-    else
+    if (bwrite(nbloqueabs, bufferMB) == ERROR)
     {
         //Escriptura errònia.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-        return EXIT_FAILURE;
+        return ERROR;
     }
+    return EXIT_SUCCESS;
 }
 
 char leer_bit(unsigned int nbloque)
@@ -341,15 +303,11 @@ char leer_bit(unsigned int nbloque)
     //Declaració e incialització variable Superbloque.
     struct superbloque SB;
     //Llegim el SuperBloc
-    if (bread(posSB, &SB))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del Superbloque realitzada correctament \n");
-    }
-    else
+    if (bread(posSB, &SB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
 
     //Declaram les variables necesaries
@@ -360,15 +318,11 @@ char leer_bit(unsigned int nbloque)
     unsigned char bufferMB[BLOCKSIZE];
 
     //LLegim el bloc corresponent
-    if (bread(nbloqueabs, bufferMB))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del bloque realitzada correctament \n");
-    }
-    else
+    if (bread(nbloqueabs, bufferMB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
 
     posbyte = posbyte % BLOCKSIZE;
@@ -377,11 +331,9 @@ char leer_bit(unsigned int nbloque)
     //Preparam la mascara
     unsigned char mascara = 128;
     mascara >>= posbit;
-    //printf("Valor de mascara despres de mascara>>= posbit %d \n", mascara);
     mascara &= bufferMB[posbyte];
-    //printf("Valor de mascara despres de mascara&= buffer.. %d \n", mascara);
     mascara >>= (7 - posbit);
-    //printf("Valor de mascara despres de mascara>>= (7-posbit) %d \n", mascara);
+
     return mascara;
 }
 
@@ -390,15 +342,11 @@ int reservar_bloque()
     //Declaració e incialització variable Superbloque.
     struct superbloque SB;
     //Llegim el SuperBloc
-    if (bread(posSB, &SB))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del Superbloque realitzada correctament \n");
-    }
-    else
+    if (bread(posSB, &SB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
     //Encara queden bloc lliures.
     if (SB.cantBloquesLibres > 0)
@@ -412,7 +360,12 @@ int reservar_bloque()
         int posBloqueMB = SB.posPrimerBloqueMB;
         for (;; posBloqueMB++)
         { //Lectura del dispositiu virtual del bloc corresponent a posBloqueMB.
-            bread(posBloqueMB, bufferMB);
+            if (bread(posBloqueMB, bufferMB) == ERROR)
+            {
+                //Error en la lectura.
+                fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                return ERROR;
+            }
             //Comparam cada bloc llegit amb el bufferAux. Cercam el primer bloc que tengui qualque byte a 0.
             if (memcmp(bufferMB, bufferAux, sizeof(bufferAux)) < 0)
             {
@@ -444,62 +397,47 @@ int reservar_bloque()
         escribir_bit(nbloque, 1);
         //Decrementam en una unitat la quantitat de bloc lliure que hi ha.
         SB.cantBloquesLibres--;
-        printf("Cantidad de bloques libres después de reservar: %d \n", SB.cantBloquesLibres);
         //Salvaguardam el superbloc.
-        if (bwrite(posSB, &SB) == BLOCKSIZE)
-        {
-            //printf("Escriptura del SB al dispositu virtual realitzat.\n");
-        }
-        else
+        if (bwrite(posSB, &SB) == ERROR)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            return ERROR;
         }
 
         unsigned char *buffer[BLOCKSIZE];
         memset(buffer, 0, sizeof(buffer));
         //Escriptura d'un buffer tot a 0 per eliminar "basura".
-        if (bwrite(nbloque, buffer) == BLOCKSIZE)
-        {
-            //printf("Escriptura del bloc al dispositu virtual realitzat correctament.\n");
-        }
-        else
+        if (bwrite(nbloque, buffer) == ERROR)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            return ERROR;
         }
         return nbloque;
     }
     else
     {
-        return EXIT_FAILURE;
+        return ERROR;
     }
 }
+
 int liberar_bloque(unsigned int nbloque)
 {
     escribir_bit(nbloque, 0);
     struct superbloque SB;
     //Llegim el SuperBloc
-    if (bread(posSB, &SB))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del Superbloque realitzada correctament \n");
-    }
-    else
+    if (bread(posSB, &SB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
 
-    //printf("Cantidad de bloques libres antes de liberar el bloque: %d\n", SB.cantBloquesLibres);
     SB.cantBloquesLibres++;
-    //printf("Cantidad de bloques libres despues de liberar el  bloque: %d\n", SB.cantBloquesLibres);
 
-    if (bwrite(posSB, &SB) == BLOCKSIZE)
-    {
-        //printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
-    }
-    else
+    if (bwrite(posSB, &SB) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
 
     return nbloque;
@@ -509,15 +447,11 @@ int escribir_inodo(unsigned int ninodo, struct inodo inodo)
 {
     struct superbloque SB;
     //Llegim el SuperBloc
-    if (bread(posSB, &SB))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del Superbloque realitzada correctament \n");
-    }
-    else
+    if (bread(posSB, &SB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
 
     //Càlcul del bloc de AI que correspon amb el inode passat per paràmetre.
@@ -525,44 +459,34 @@ int escribir_inodo(unsigned int ninodo, struct inodo inodo)
 
     struct inodo inodos[BLOCKSIZE / INODOSIZE];
 
-    if (bread(numBloque, inodos))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del bloque realitzada correctament \n");
-    }
-    else
+    if (bread(numBloque, inodos) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
     inodos[ninodo % (BLOCKSIZE / INODOSIZE)] = inodo;
 
-    if (bwrite(numBloque, inodos) == BLOCKSIZE)
+    if (bwrite(numBloque, inodos) == ERROR)
     {
-        //printf("Escriptura del bloc al dispositu virtual realitzat correctament.\n");
-        return EXIT_SUCCESS;
-    }
-    else
-    {
+        //Error amb l'escriptura
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-        return EXIT_FAILURE;
+        return ERROR;
     }
+
+    return EXIT_SUCCESS;
 }
 
 int leer_inodo(unsigned int ninodo, struct inodo *inodo)
 {
     struct superbloque SB;
     //Llegim el SuperBloc
-    if (bread(posSB, &SB))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del Superbloque realitzada correctament \n");
-    }
-    else
+    if (bread(posSB, &SB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-        return EXIT_FAILURE;
+        return ERROR;
+        ;
     }
 
     //Càlcul del bloc de AI que correspon amb el inode passat per paràmetre.
@@ -570,16 +494,11 @@ int leer_inodo(unsigned int ninodo, struct inodo *inodo)
 
     struct inodo inodos[BLOCKSIZE / INODOSIZE];
 
-    if (bread(numBloque, inodos))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del bloque realitzada correctament \n");
-    }
-    else
+    if (bread(numBloque, inodos) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-        return EXIT_FAILURE;
+        return ERROR;
     }
     //Volcam el inodo solicitat al punter passat per parametre.
     *inodo = inodos[ninodo % (BLOCKSIZE / INODOSIZE)];
@@ -591,12 +510,7 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
 {
     struct superbloque SB;
     //Llegim el SuperBloc
-    if (bread(posSB, &SB))
-    {
-        //Lectura realitzada correctament.
-        //printf("Lectura del Superbloque realitzada correctament \n");
-    }
-    else
+    if (bread(posSB, &SB) == ERROR)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -632,16 +546,16 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
         }
 
         //Escrivim l'inode.
-        escribir_inodo(posInodoReservado, inodo);
+        if ((escribir_inodo(posInodoReservado, inodo) == ERROR))
+        {
+            return ERROR;
+        }
 
         //Actualitzam i reescrivim SB.
         SB.cantInodosLibres--;
-        if (bwrite(posSB, &SB) == BLOCKSIZE)
+        if (bwrite(posSB, &SB) == ERROR)
         {
-            //printf("Escriptura del SB al dispositu virtual realitzat correctament.\n");
-        }
-        else
-        {
+            //Error amb l'escriptura
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
         //Retornam la posicio del inode reservat.
@@ -650,7 +564,7 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
     else
     {
         printf("No quedan Inodos libres \n");
-        return EXIT_FAILURE;
+        return ERROR;
     }
 }
 
@@ -689,7 +603,7 @@ int obtener_nRangoBL(struct inodo inodo, unsigned int nblogico, unsigned int *pt
     {
         *ptr = 0;
         fprintf(stderr, "Bloque lógico fuera de rango \n");
-        return EXIT_FAILURE;
+        return ERROR;
     }
 }
 //Funcio que obte els indexs dels blocs de punters
@@ -733,7 +647,7 @@ int obtener_indice(int nblogico, int nivel_punteros)
             return (((nblogico - INDIRECTOS1) % (NPUNTEROS * NPUNTEROS)) % NPUNTEROS);
         }
     }
-    return EXIT_FAILURE; //Evitam el error "control reaches end of non-void function"
+    return ERROR; //Evitam el error "control reaches end of non-void function"
 }
 
 int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reservar)
@@ -741,11 +655,21 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     struct inodo inodo;
     unsigned int ptr, ptr_ant, salvar_inodo, nRangoBL, nivel_punteros, indice;
     unsigned int buffer[NPUNTEROS];
-    leer_inodo(ninodo, &inodo);
+    if ((leer_inodo(ninodo, &inodo)) == ERROR)
+    {
+
+        return ERROR;
+    }
+
     ptr = 0;
     ptr_ant = 0;
     salvar_inodo = 0;
     nRangoBL = obtener_nRangoBL(inodo, nblogico, &ptr);
+    if (nRangoBL == ERROR)
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
+    }
     nivel_punteros = nRangoBL;
     //printf("nRangoBL : %d \n", nRangoBL);
     while (nivel_punteros > 0)
@@ -756,12 +680,17 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             //Realitzam una consulta i no hi ha cap bloc de indexos.
             if (reservar == 0)
             {
-                return -1;
+                return ERROR;
             }
             else
             {
                 salvar_inodo = 1;
                 ptr = reservar_bloque(); // De punters
+                if (ptr == ERROR)
+                {
+                    fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                    return ERROR;
+                }
                 inodo.numBloquesOcupados++;
                 inodo.ctime = time(NULL); // Data actual.
                 if (nivel_punteros == nRangoBL)
@@ -779,8 +708,17 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
                 }
             }
         }
-        bread(ptr, buffer);
+        if (bread(ptr, buffer) == ERROR)
+        {
+            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            return ERROR;
+        }
         indice = obtener_indice(nblogico, nivel_punteros);
+        if(indice == ERROR){
+            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            return ERROR;
+        }
+
         //Guardam el punter.
         ptr_ant = ptr;
         //Desplaçam el punter al següent nivell.
@@ -795,12 +733,16 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
         //Error, tot està inicialitzat a 0 i feim un consultar.
         if (reservar == 0)
         {
-            return -1;
+            return ERROR;
         }
         else
         {
             salvar_inodo = 1;
             ptr = reservar_bloque(); // De dades.
+            if (ptr == ERROR){
+                fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                return ERROR;
+            }
             inodo.numBloquesOcupados++;
             inodo.ctime = time(NULL); //Data actual.
             if (nRangoBL == 0)
@@ -812,7 +754,10 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             {
                 buffer[indice] = ptr;
                 printf("punteros_nivel%d[%d] = %d \n", nivel_punteros + 1, indice, ptr);
-                bwrite(ptr_ant, buffer);
+                if(bwrite(ptr_ant, buffer) == ERROR){
+                    fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                    return ERROR;
+                }
             }
         }
     }
@@ -905,7 +850,6 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
     ptr = 0;
     //printf("Valor ptr: %d\n", ptr);
 
-
     //Buble que recorr tots els blocs logics
     for (nBL = primerBL; nBL <= ultimoBL; nBL++)
     {
@@ -940,7 +884,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
             liberar_bloque(ptr);
             liberados++;
 
-            printf("liberar_bloques_inodo()→ liberado BF %d de datos para BL %d\n",ptr,nBL);
+            printf("liberar_bloques_inodo()→ liberado BF %d de datos para BL %d\n", ptr, nBL);
 
             if (nRangoBL == 0)
             {
@@ -961,7 +905,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
                         //No penjen mes blocs ocupats per tant queda alliberar el bloc de punters
                         liberar_bloque(ptr);
                         liberados++;
-                        printf("liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d\n",ptr,nivel_punteros,nBL);
+                        printf("liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d\n", ptr, nivel_punteros, nBL);
 
                         //Aqui es pot afegir una millora per botar-nos els blocs que no fa falta explorar
 
@@ -974,7 +918,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
                     else
                     {
                         //Escrivim en el fitxer el bloc de punters modificat
-                        bwrite(ptr, bloques_punteros[nivel_punteros-1]);
+                        bwrite(ptr, bloques_punteros[nivel_punteros - 1]);
 
                         //Hem de sortir del bucle ja que no es necessari alliberar els blocs dels nivells superiors
                         nivel_punteros = nRangoBL + 1;
