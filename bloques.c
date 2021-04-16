@@ -15,7 +15,7 @@ int bmount(const char *camino)
     if (descriptor == -1)
     {
         //Cas operació errònia.
-        return EXIT_FAILURE;
+        return ERROR;
     }
     else
     {
@@ -27,7 +27,7 @@ int bmount(const char *camino)
 //Tancam enllaç amb el dispositiu virtual.
 int bumount()
 {
-    //Retora EXIT_SUCCESS (Cas operació completada correctament) o EXIT_FAILURE(Cas operació errònia).
+    //Retora 0  en cas d'èxit i -1 en cas d'error.
     return close(descriptor);
 }
 
@@ -45,7 +45,7 @@ int bwrite(unsigned int nbloque, const void *buf)
     //Comprovam el resultat de l'operació.
     if (numBytes<0){
         //Cas operació errònia.
-        return EXIT_FAILURE;
+        return ERROR;
     }else{
          //Cas operació completada amb èxit.
         return numBytes;
@@ -67,7 +67,7 @@ int bread(unsigned int nbloque, void *buf)
     //Comprovam el resultat de l'operació.
     if (numBytes<0){
         //Cas operació errònia.
-        return EXIT_FAILURE;
+        return ERROR;
     }else{
         //Cas operació completada amb èxit.
         return numBytes;
