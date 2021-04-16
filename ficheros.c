@@ -6,7 +6,10 @@
 int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offset, unsigned int nbytes)
 {
     struct inodo inodo;
-    leer_inodo(ninodo, &inodo);
+    if (leer_inodo(ninodo, &inodo) == ERROR)
+    {
+        return ERROR;
+    }
     int numeroBytesEscritos = 0;
 
     if ((inodo.permisos & 2) != 2)
@@ -24,14 +27,6 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         int desp1 = offset % BLOCKSIZE;
         //Calculam el desplaçament en el bloc per veure fins on arriben els nbytes escrits.
         int desp2 = (offset + nbytes - 1) % BLOCKSIZE;
-        //fprintf(stderr, "primerBL %d \n" , primerBL);
-        //fprintf(stderr, "ultimoBL: %d \n", ultimoBL);
-        /*
-        printf("Valor primerBL: %d\n", primerBL);
-        printf("Valor ultimoBL: %d\n", ultimoBL);
-        printf("Valor desp1: %d\n", desp1);
-        printf("Valor desp2: %d\n", desp2);
-        */
         int nbfisico;
         unsigned char buf_bloque[BLOCKSIZE];
 
@@ -41,20 +36,21 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             //Obtenim el nombre de bloc fisic, corresponent a primerBL.
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 1);
             //Llegim el bloc des del Dispositiu Virtual.
-            if (bread(nbfisico, buf_bloque))
-            {
-                //Lectura realitzada correctament.
-            }
-            else
+            if (bread(nbfisico, buf_bloque) == ERROR)
             {
                 //Error en la lectura.
                 fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-                return EXIT_FAILURE;
+                return ERROR;
             }
             //Escribim els nbytes del buf_original fins els buf_bloque + desp1 (on hem de començar a escriure).
             memcpy(buf_bloque + desp1, buf_original, nbytes);
             //Salvaguardam el buf_orginal, amb el contingut modificat.
-            bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
+            if (bwrite(nbfisico, buf_bloque) == ERROR)
+            {
+                //Error amb l'escriptura.
+                fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                return ERROR;
+            }
             numeroBytesEscritos = nbytes;
         }
         else
@@ -62,19 +58,21 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             //La escriptura afecta a més d'un bloc.
             //Obtenim el nombre del bloc físic, corresponent a primerBL.
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 1);
-            if (bread(nbfisico, buf_bloque))
-            {
-                //Lectura realitzada correctament.
-            }
-            else
+            if (bread(nbfisico, buf_bloque) == ERROR)
             {
                 //Error en la lectura.
                 fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-                return EXIT_FAILURE;
+                return ERROR;
             }
             //Escriptura del primer bloc lògic.
             memcpy(buf_bloque + desp1, buf_original, BLOCKSIZE - desp1);
-            bwrite(nbfisico, buf_bloque); //HEM DE REVISAR AIXÒ.
+            if (bwrite(nbfisico, buf_bloque) == ERROR)
+            {
+                //Error amb l'escriptura.
+                fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                return ERROR;
+
+            } //HEM DE REVISAR AIXÒ.
             numeroBytesEscritos += BLOCKSIZE - desp1;
             //Escriptura dels blocs lògics intermitjos.
             for (int i = primerBL + 1; i < ultimoBL; i++)
@@ -83,14 +81,27 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
                 numeroBytesEscritos += bwrite(nbfisico, buf_original + (BLOCKSIZE - desp1) + (i - primerBL - 1) * BLOCKSIZE);
             }
             nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 1);
-            bread(nbfisico, buf_bloque);
+            if (bread(nbfisico, buf_bloque) == ERROR)
+            {
+                //Error en la lectura.
+                fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                return ERROR;
+            }
             memcpy(buf_bloque, buf_original + (nbytes - desp2 - 1), desp2 + 1);
-            bwrite(nbfisico, buf_bloque);
+            if (bwrite(nbfisico, buf_bloque) == ERROR)
+            {
+                //Error amb l'escriptura.
+                fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                return ERROR;
+            }
             numeroBytesEscritos += desp2 + 1;
         }
     }
     //Llegim l'inode actualitzat.
-    leer_inodo(ninodo, &inodo);
+    if (leer_inodo(ninodo, &inodo) == ERROR)
+    {
+        return ERROR;
+    }
     //Comprovam si hem escrit més enllà del EOF del fitxer associat al inode.
     if (offset + nbytes > inodo.tamEnBytesLog)
     {
@@ -101,7 +112,10 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     //Actualitzam les dades associades al inde.
     inodo.mtime = time(NULL);
     //Escriptura del node actualitzat.
-    escribir_inodo(ninodo, inodo);
+    if (escribir_inodo(ninodo, inodo) == ERROR)
+    {
+        return ERROR;
+    }
 
     return numeroBytesEscritos;
 }
@@ -110,7 +124,10 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
 {
 
     struct inodo inodo;
-    leer_inodo(ninodo, &inodo);
+    if (leer_inodo(ninodo, &inodo) == ERROR)
+    {
+        return ERROR;
+    }
     int leidos = 0;
     //printf("Numero inodo: %d \n", ninodo);
 
@@ -140,12 +157,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         int desp1 = offset % BLOCKSIZE;
         //Calculam el desplaçament en el bloc per veure fins on arriben els nbytes escrits.
         int desp2 = (offset + nbytes - 1) % BLOCKSIZE;
-        /*
-        printf("Valor primerBL: %d\n", primerBL);
-        printf("Valor ultimoBL: %d\n", ultimoBL);
-        printf("Valor desp1: %d\n", desp1);
-        printf("Valor desp2: %d\n", desp2);
-        */
+
         int nbfisico;
         unsigned char buf_bloque[BLOCKSIZE];
 
@@ -156,7 +168,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
             //printf("Valor nbfisico: %d\n",nbfisico);
             //Bloc físic no existeix.
-            if (nbfisico == -1)
+            if (nbfisico == ERROR)
             {
                 //printf("El bloc de datos a leer no existe \n");
                 //No llegim res, però si augmentam el valor del bytes llegits (tamnay del bloc).
@@ -168,7 +180,12 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             {
                 //El bloc físic si que existeix.
                 //Lectura i increment del valor dels bytes llegits.
-                bread(nbfisico, buf_bloque);
+                if (bread(nbfisico, buf_bloque) == ERROR)
+                {
+                    //Error en la lectura.
+                    fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                    return ERROR;
+                }
                 leidos += nbytes;
                 //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
                 memcpy(buf_original, buf_bloque + desp1, nbytes);
@@ -181,7 +198,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
             //printf("Valor nbfisico: %d\n",nbfisico);
             //Bloc físic no existeix.
-            if (nbfisico == -1)
+            if (nbfisico == ERROR)
             {
                 //printf("El bloc de datos a leer no existe \n");
                 //No llegim res, però si augmentam el valor del bytes llegits (tamnay del bloc).
@@ -191,7 +208,12 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             {
                 //El bloc físic si que existeix.
                 //Tracament per al primer bloc lògic.
-                bread(nbfisico, buf_bloque);
+                if (bread(nbfisico, buf_bloque) == ERROR)
+                {
+                    //Error en la lectura.
+                    fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                    return ERROR;
+                }
                 leidos += BLOCKSIZE - desp1;
                 //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
                 memcpy(buf_original, buf_bloque + desp1, BLOCKSIZE - desp1);
@@ -201,7 +223,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
                     nbfisico = traducir_bloque_inodo(ninodo, i, 0);
                     //printf("Valor nbfisico: %d\n",nbfisico);
                     //Bloc físic no existeix.
-                    if (nbfisico == -1)
+                    if (nbfisico == ERROR)
                     {
                         //printf("El bloc de datos a leer no existe \n");
                         leidos += BLOCKSIZE;
@@ -217,16 +239,21 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
                 nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 0);
                 //printf("Valor nbfisico: %d\n",nbfisico);
                 //Bloc físic no existeix.
-                if (nbfisico == -1)
+                if (nbfisico == ERROR)
                 {
-                    leidos += desp2 +1;
+                    leidos += desp2 + 1;
                     //Retonam la quantitat de bytes llegits de n blocs.
                     return leidos;
                 }
                 else
                 {
                     //Bloc físic si existeix.
-                    bread(nbfisico, buf_bloque);
+                    if (bread(nbfisico, buf_bloque) == ERROR)
+                    {
+                        //Error en la lectura.
+                        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                        return ERROR;
+                    }
                     leidos += desp2 + 1;
                     memcpy(buf_original + (nbytes - desp2 - 1), buf_bloque, desp2 + 1);
                     //Retonam la quantitat de bytes llegits de n blocs.
@@ -243,8 +270,8 @@ int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
 {
     struct inodo inodo;
     //Lectura de l'inode corresponent al STAT.
-    if (leer_inodo(ninodo, &inodo) == EXIT_FAILURE)
-        return EXIT_FAILURE;
+    if (leer_inodo(ninodo, &inodo) == ERROR)
+        return ERROR;
 
     //Inicialitzam el valor dels atributs de STAT corresponent.
     p_stat->tipo = inodo.tipo;
@@ -256,7 +283,7 @@ int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
     p_stat->tamEnBytesLog = inodo.tamEnBytesLog;
     p_stat->numBloquesOcupados = inodo.numBloquesOcupados;
 
-    return 0;
+    return EXIT_FAILURE;
 }
 
 //Imprimir informació del struct STAT passat per paràmetre.
@@ -289,35 +316,37 @@ int mi_chmod_f(unsigned int ninodo, unsigned char permisos)
 {
     struct inodo inodo;
     //lectura de l'inode.
-    if (leer_inodo(ninodo, &inodo) == EXIT_FAILURE)
-        return EXIT_FAILURE;
+    if (leer_inodo(ninodo, &inodo) == ERROR)
+        return ERROR;
     //Actualitzam valors dels inodes.
     inodo.permisos = permisos;
     inodo.ctime = time(NULL);
     //Escriptura de l'inode actualitzat.
-    if (escribir_inodo(ninodo, inodo) == EXIT_FAILURE)
-        return EXIT_FAILURE;
-
+    if (escribir_inodo(ninodo, inodo) == ERROR)
+        return ERROR;
     return EXIT_SUCCESS;
 }
 
 int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
 {
     struct inodo inodo;
-    leer_inodo(ninodo, &inodo);
+    if (leer_inodo(ninodo, &inodo) == ERROR)
+    {
+        return ERROR;
+    }
     //printf("Numero inodo: %d \n", ninodo);
 
     //Comprovam que  tengui permisos de lectura.
     if ((inodo.permisos & 2) != 2)
     {
         printf("No tienes permisos de escritura en el inodo indicado \n");
-        return EXIT_FAILURE;
+        return ERROR;
     }
     else
     {
         //Comprovam que no trunquem mes del tamany en bytes logics.
         if (nbytes <= inodo.tamEnBytesLog)
-        {   
+        {
             //Declarcions varibales.
             int primerBL;
             int liberados;
@@ -332,7 +361,11 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
 
             //Alliberam tot els blocs a partir de primerBL.
             liberados = liberar_bloques_inodo(primerBL, &inodo);
-
+            if (liberados == ERROR){
+                //Error en la lectura.
+                fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                return ERROR;
+            }
             //Actualitzam les dades del inode.
             inodo.mtime = time(NULL);
             inodo.ctime = time(NULL);
@@ -340,15 +373,15 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
             inodo.numBloquesOcupados -= liberados;
 
             //Guardam les dades del inode.
-            if (escribir_inodo(ninodo, inodo) == EXIT_FAILURE)
-                return EXIT_FAILURE;
+            if (escribir_inodo(ninodo, inodo) == ERROR)
+                return ERROR;
 
             return liberados;
         }
         else
         {
             printf("No se puede truncar más allá del tamaño en bytes lógicos del fichero/directorio. \n");
-            return EXIT_FAILURE;
+            return ERROR;
         }
     }
 }
