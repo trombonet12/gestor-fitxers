@@ -8,11 +8,7 @@ unsigned char *buffer[BLOCKSIZE];
 int main(int argc, char **argv)
 {
     //Establim enllaç amb el dispositiu virtual.
-    if (bmount(argv[1]))
-    {
-        //printf("Operació realitzada correctament \n");
-    }
-    else
+    if (bmount(argv[1]) == ERROR)
     {
         //Control d'errors.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -29,17 +25,40 @@ int main(int argc, char **argv)
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
     }
-    tamMB(atoi(argv[2]));
-    tamAI(atoi(argv[2]) / 4);
-    initSB(atoi(argv[2]), atoi(argv[2]) / 4);
-    initMB();
-    //printf("PRINCIPI INIT AI\n");
-    initAI();
-    //printf("FINAL INIT AI\n");
     
+    if (tamMB(atoi(argv[2])) == ERROR)
+    {
+        printf("ERROR_MKFS: Error en la funcion tamMB\n");
+        return ERROR;
+    }
+    
+    if (tamAI(atoi(argv[2]) / 4) == ERROR)
+    {
+        printf("ERROR_MKFS: Error en la funcion tamAI\n");
+        return ERROR;
+    }
+    
+    if (initSB(atoi(argv[2]), atoi(argv[2]) / 4) == ERROR)
+    {
+        printf("ERROR_MKFS: Error en la funcion initSB\n");
+        return ERROR;
+    }
+    
+    if (initMB() == ERROR)
+    {
+        printf("ERROR_MKFS: Error en la funcion initMB\n");
+        return ERROR;
+    }
+    
+    if (initAI() == ERROR)
+    {
+        printf("ERROR_MKFS: Error en la funcion initAI\n");
+        return ERROR;
+    }
+
     //printf("Creamos directorio raiz: %d \n", reservar_inodo('d', '7'));
     reservar_inodo('d', '7');
-    
+
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)
     {

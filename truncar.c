@@ -7,11 +7,7 @@ int main(int argc, char **argv)
     if (argc == 4)
     {
         //Establim enllaç amb el dispositiu virtual.
-        if (bmount(argv[1]))
-        {
-            //printf("Operació realitzada correctament \n");
-        }
-        else
+        if (bmount(argv[1]) == ERROR)
         {
             //Control d'errors.
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -21,7 +17,7 @@ int main(int argc, char **argv)
         if (atoi(argv[3]) == 0)
         {
             //Alliberam tot l'inode
-            if (liberar_inodo(atoi(argv[2])) == -1)
+            if (liberar_inodo(atoi(argv[2])) == ERROR)
             {
                 printf("ERROR: liberar inodo no se ha ejecutado correctamente\n");
                 //exit(0);
@@ -40,6 +36,11 @@ int main(int argc, char **argv)
         struct STAT p_stat;
 
         mi_stat_f(atoi(argv[2]), &p_stat);
+        if (mi_stat_f(atoi(argv[2]), &p_stat) == ERROR)
+        {
+            printf("ERROR_TRUNCAR: Error a la hora de obtener los datos de un inodo.\n");
+            return ERROR;
+        }
 
         printf("DATOS INODO %d \n", atoi(argv[2]));
         imprimir_stat(&p_stat);

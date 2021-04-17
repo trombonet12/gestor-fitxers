@@ -7,11 +7,7 @@ int main(int argc, char **argv)
     if (argc == 3)
     {
         //Establim enllaç amb el dispositiu virtual.
-        if (bmount(argv[1]))
-        {
-            //printf("Operació realitzada correctament \n");
-        }
-        else
+        if (bmount(argv[1]) == ERROR)
         {
             //Control d'errors.
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -28,21 +24,11 @@ int main(int argc, char **argv)
         char string[128];
         leidos = mi_read_f(atoi(argv[2]), buffer_texto, offset, TAMBUFFER);
         offset += TAMBUFFER;
-        //sprintf(string, "Bytes leídos %d\n", leidos);
-        //write(2, string, strlen(string));
         while (leidos > 0)
-        {               
-            //if (memcmp(buffer_texto, buffer_aux, TAMBUFFER) != 0)
-            //{
-                write(1, buffer_texto, leidos);
-                //memset(buffer_texto, 0, TAMBUFFER);
-                
+        {
+            write(1, buffer_texto, leidos);
 
-                //Ho imprimim per la sortida d'errors (2) per que no surti a l'arxiu si redireccionam l'output de la terminal.
-                //sprintf(string, "Bytes leídos %d\n", leidos);
-                //write(2, string, strlen(string));
-            //}
-            memset(buffer_texto,0,TAMBUFFER);
+            memset(buffer_texto, 0, TAMBUFFER);
             total_leidos += leidos;
             leidos = mi_read_f(atoi(argv[2]), buffer_texto, offset, TAMBUFFER);
             offset += TAMBUFFER;
@@ -50,7 +36,11 @@ int main(int argc, char **argv)
         //Obtenim el tamany en bytes logics del inode en concret.
         //Ho imprimim per la sortida d'errors (2) per que no surti a l'arxiu si redireccionam l'output de la terminal.
         struct STAT p_stat;
-        mi_stat_f(atoi(argv[2]), &p_stat);
+        if (mi_stat_f(atoi(argv[2]), &p_stat) == ERROR)
+        {
+            printf("ERROR_LEER: Error a la hora de obtener los datos de un inodo.\n");
+            return ERROR;
+        }
         sprintf(string, "Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
         write(2, string, strlen(string));
         sprintf(string, "Total_leidos: %d\n", total_leidos);
