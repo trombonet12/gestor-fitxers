@@ -263,7 +263,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         }
     }
 
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }
 //Retorna la metainfromació d'un fitxer o directori (corresonent al inde passat per paràmetre).
 int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
@@ -283,7 +283,7 @@ int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
     p_stat->tamEnBytesLog = inodo.tamEnBytesLog;
     p_stat->numBloquesOcupados = inodo.numBloquesOcupados;
 
-    return EXIT_FAILURE;
+    return EXIT_SUCCESS;
 }
 
 //Imprimir informació del struct STAT passat per paràmetre.
@@ -327,6 +327,7 @@ int mi_chmod_f(unsigned int ninodo, unsigned char permisos)
     return EXIT_SUCCESS;
 }
 
+//Allibera nbytes d'un inode
 int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
 {
     struct inodo inodo;
@@ -350,6 +351,8 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
             //Declarcions varibales.
             int primerBL;
             int liberados;
+
+            //Calculam el primer bloc logic
             if ((nbytes % BLOCKSIZE) == 0)
             {
                 primerBL = nbytes / BLOCKSIZE;
@@ -361,7 +364,8 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
 
             //Alliberam tot els blocs a partir de primerBL.
             liberados = liberar_bloques_inodo(primerBL, &inodo);
-            if (liberados == ERROR){
+            if (liberados == ERROR)
+            {
                 //Error en la lectura.
                 fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                 return ERROR;
