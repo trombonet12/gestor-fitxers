@@ -303,12 +303,13 @@ void imprimir_stat(struct STAT *p_stat)
     ts = localtime(&p_stat->ctime);
     strftime(ctime, sizeof(ctime), "%a %Y-%m-%d %H:%M:%S\n", ts);
 
-    printf("El tipo del STAT es: %c\n", p_stat->tipo);
-    printf("Los permisos del STAT es: %c\n", p_stat->permisos);
+    //Imprimim les dades solicitades
+    printf("El tipo del INODE es: %c\n", p_stat->tipo);
+    printf("Los permisos del INODE es: %c\n", p_stat->permisos);
     printf("ATIME: %sMTIME: %sCTIME: %s", atime, mtime, ctime);
-    printf("Los nlinks del STAT es: %d\n", p_stat->nlinks);
-    printf("El tamEnBytesLog del STAT es: %d\n", p_stat->tamEnBytesLog);
-    printf("El numBloquesOcupados del STAT es: %d\n", p_stat->numBloquesOcupados);
+    printf("Los nlinks del INODE es: %d\n", p_stat->nlinks);
+    printf("El tamEnBytesLog del INODE es: %d\n", p_stat->tamEnBytesLog);
+    printf("El numBloquesOcupados del INODE es: %d\n", p_stat->numBloquesOcupados);
 }
 
 //Mètode que actualitza l'atribut permisos d'un fitxer, passant per paràmetre el valor de l'inode que li correspon.
