@@ -26,6 +26,7 @@ int main(int argc, char **argv)
         }
     }
     
+    //Inicialitzam tots el metadatos
     if (tamMB(atoi(argv[2])) == ERROR)
     {
         printf("ERROR_MKFS: Error en la funcion tamMB\n");

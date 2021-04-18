@@ -337,6 +337,7 @@ char leer_bit(unsigned int nbloque)
     return mascara;
 }
 
+//Funcio reserva un bloc i ens retorna el seu numero
 int reservar_bloque()
 {
     //Declaració e incialització variable Superbloque.
@@ -420,6 +421,7 @@ int reservar_bloque()
     }
 }
 
+//Funcio que allibera un bloc en concret
 int liberar_bloque(unsigned int nbloque)
 {
     escribir_bit(nbloque, 0);
@@ -443,6 +445,7 @@ int liberar_bloque(unsigned int nbloque)
     return nbloque;
 }
 
+//Funcio que escriu a un inode en concret un inode passat per parametre
 int escribir_inodo(unsigned int ninodo, struct inodo inodo)
 {
     struct superbloque SB;
@@ -649,6 +652,7 @@ int obtener_indice(int nblogico, int nivel_punteros)
     return ERROR; //Evitam el error "control reaches end of non-void function"
 }
 
+//Funcio que retorna el Numero de bloc fisic a partir d'un inode y un bloc logic
 int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reservar)
 {
     struct inodo inodo;
@@ -695,13 +699,13 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
                 {
                     //El bloc pescritosenja directament de l'inode.
                     inodo.punterosIndirectos[nRangoBL - 1] = ptr;
-                    printf("inodo.punterosIndirectos[%d]: %d \n", nRangoBL - 1, ptr);
+                    fprintf(stderr,"inodo.punterosIndirectos[%d]: %d \n", nRangoBL - 1, ptr);
                 }
                 else
                 {
                     //El bloc penja d'un altre bloc de punters.
                     buffer[indice] = ptr;
-                    printf("punteros_nivel%d[%d] = %d \n", nivel_punteros + 1, indice, ptr);
+                    fprintf(stderr,"punteros_nivel%d[%d] = %d \n", nivel_punteros + 1, indice, ptr);
                     bwrite(ptr_ant, buffer);
                 }
             }
@@ -748,12 +752,12 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             if (nRangoBL == 0)
             {
                 inodo.punterosDirectos[nblogico] = ptr;
-                printf("inodo.punterosDirectos[%d] =  %d \n", nblogico, ptr);
+                fprintf(stderr,"inodo.punterosDirectos[%d] =  %d \n", nblogico, ptr);
             }
             else
             {
                 buffer[indice] = ptr;
-                printf("punteros_nivel%d[%d] = %d \n", nivel_punteros + 1, indice, ptr);
+                fprintf(stderr,"punteros_nivel%d[%d] = %d \n", nivel_punteros + 1, indice, ptr);
                 if (bwrite(ptr_ant, buffer) == ERROR)
                 {
                     fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -764,14 +768,15 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
     }
     if (salvar_inodo == 1)
     {
-        if(escribir_inodo(ninodo, inodo) == ERROR){
+        if (escribir_inodo(ninodo, inodo) == ERROR)
+        {
             return ERROR;
         }
     }
     return ptr; //Nbfisico del bloc de dades.
 }
 
-//Allibera tot el contigut del inode
+//Allibera tot el contigut del inode passat per parametre
 int liberar_inodo(unsigned int ninodo)
 {
 
@@ -784,14 +789,13 @@ int liberar_inodo(unsigned int ninodo)
     }
     //Aqui ja incrementam la quantitat de blocs lliure, mitjançant liberar_bloque()
     bloquesLiberados = liberar_bloques_inodo(0, &inodo);
-    fflush(stdout);
     if (bloquesLiberados == -1)
     {
         printf("ERROR: No se ha podido liberar los bloques.\n");
         return ERROR;
     }
     printf("bloquesLiberados: %d \n", bloquesLiberados);
-    //DEcrementam el valor de la varibale de l'inde amb el retorn de liberar_bloques_inodo.
+    //Decrementam el valor de la varibale de l'inde amb el retorn de liberar_bloques_inodo.
     inodo.numBloquesOcupados -= bloquesLiberados;
     printf("numBloquesOcupados: %d\n", inodo.numBloquesOcupados);
     //Comprovam que hem alliberat el blocs associats al inode.
@@ -848,11 +852,13 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
     int indices[3];
     int liberados = 0;
 
+    //Comprovam si hi ha contingut
     if (inodo->tamEnBytesLog == 0)
     {
-        printf("El fichero esta vacio. \n");
+        fprintf(stderr,"El fichero esta vacio. \n");
         return liberados;
     }
+    //Calculam el darrer bloc logic
     if ((inodo->tamEnBytesLog % BLOCKSIZE) == 0)
     {
         ultimoBL = inodo->tamEnBytesLog / BLOCKSIZE - 1;
@@ -862,26 +868,24 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
         ultimoBL = inodo->tamEnBytesLog / BLOCKSIZE;
     }
 
-    printf("liberar_bloques_inodo()→ primer BL: %d, último BL: %d\n", primerBL, ultimoBL);
+    fprintf(stderr,"liberar_bloques_inodo()→ primer BL: %d, último BL: %d\n", primerBL, ultimoBL);
 
     memset(bufAux_punteros, 0, sizeof(bufAux_punteros));
     ptr = 0;
-    //printf("Valor ptr: %d\n", ptr);
 
     //Buble que recorr tots els blocs logics
     for (nBL = primerBL; nBL <= ultimoBL; nBL++)
     {
-        //printf("Valor nBL: %d\n", nBL);
-        //printf("Valor nRangoBL: %d\n", nRangoBL);
+        //Obtenim el rang del bloc logic
         nRangoBL = obtener_nRangoBL(*inodo, nBL, &ptr);
 
         if (nRangoBL == ERROR)
         {
-            printf("ERROR: No se ha podido obtener el rango del BL\n");
+            fprintf(stderr,"ERROR: No se ha podido obtener el rango del BL\n");
             return ERROR;
         }
         nivel_punteros = nRangoBL;
-
+        //Bucle que obte les dades necessaries dels nivells de punters
         while (ptr > 0 && nivel_punteros > 0)
         {
             indice = obtener_indice(nBL, nivel_punteros);
@@ -914,8 +918,8 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
             }
             liberados++;
 
-            printf("liberar_bloques_inodo()→ liberado BF %d de datos para BL %d\n", ptr, nBL);
-
+            fprintf(stderr,"liberar_bloques_inodo()→ liberado BF %d de datos para BL %d\n", ptr, nBL);
+            //COmprovam si es directe o indirecte
             if (nRangoBL == 0)
             {
                 //Es un punter directe
@@ -924,12 +928,14 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
             else
             {
                 nivel_punteros = 1;
+                //Bucle que va alliberant tot els blocs als punters indirectes
                 while (nivel_punteros <= nRangoBL)
                 {
                     indice = indices[nivel_punteros - 1];
                     bloques_punteros[nivel_punteros - 1][indice] = 0;
                     ptr = ptr_nivel[nivel_punteros - 1];
 
+                    //Comprovam si hi ha bloc que penjen
                     if (memcmp(bloques_punteros[nivel_punteros - 1], bufAux_punteros, BLOCKSIZE) == 0)
                     {
                         //No penjen mes blocs ocupats per tant queda alliberar el bloc de punters
@@ -938,7 +944,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
                             return ERROR;
                         }
                         liberados++;
-                        printf("liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d\n", ptr, nivel_punteros, nBL);
+                        fprintf(stderr,"liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d\n", ptr, nivel_punteros, nBL);
 
                         //Aqui es pot afegir una millora per botar-nos els blocs que no fa falta explorar
 
@@ -951,7 +957,8 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
                     else
                     {
                         //Escrivim en el fitxer el bloc de punters modificat
-                        if(bwrite(ptr, bloques_punteros[nivel_punteros - 1])== ERROR){
+                        if (bwrite(ptr, bloques_punteros[nivel_punteros - 1]) == ERROR)
+                        {
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                             return ERROR;
                         }

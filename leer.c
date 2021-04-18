@@ -24,6 +24,7 @@ int main(int argc, char **argv)
         char string[128];
         leidos = mi_read_f(atoi(argv[2]), buffer_texto, offset, TAMBUFFER);
         offset += TAMBUFFER;
+        //Bucle que va llegint tot el contingut y el imprimeix per pantalla
         while (leidos > 0)
         {
             write(1, buffer_texto, leidos);
@@ -33,6 +34,7 @@ int main(int argc, char **argv)
             leidos = mi_read_f(atoi(argv[2]), buffer_texto, offset, TAMBUFFER);
             offset += TAMBUFFER;
         }
+        printf("\n");
         //Obtenim el tamany en bytes logics del inode en concret.
         //Ho imprimim per la sortida d'errors (2) per que no surti a l'arxiu si redireccionam l'output de la terminal.
         struct STAT p_stat;
@@ -41,6 +43,7 @@ int main(int argc, char **argv)
             printf("ERROR_LEER: Error a la hora de obtener los datos de un inodo.\n");
             return ERROR;
         }
+        //Imprimim les dades
         sprintf(string, "Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
         write(2, string, strlen(string));
         sprintf(string, "Total_leidos: %d\n", total_leidos);

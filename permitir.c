@@ -11,7 +11,7 @@ int main(int argc, char **argv)
             //Control d'errors.
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
-
+        //Canviam els permisos
         if (mi_chmod_f(atoi(argv[2]), *argv[3]) == ERROR)
         {
             printf("ERROR_PERMITIR: Error en la funcion mi_chmod_f\n");

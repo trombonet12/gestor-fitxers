@@ -31,9 +31,9 @@ int main(int argc, char **argv)
     printf("Quantitat de inodes lliures al array de inodes és: %d \n", SB.cantInodosLibres); //Print clarificatiu
     printf("Quantitat de blocs totals és: %d \n", SB.totBloques);                            //Print clarificatiu
     printf("Quantitat de inodes és: %d \n", SB.totInodos);                                   //Print clarificatiu
-    printf("Tamany de SB: %lu \n", sizeof(struct superbloque));                              //Print clarificatiu
+    //printf("Tamany de SB: %lu \n", sizeof(struct superbloque));                              //Print clarificatiu
 
-    printf("Sizeof struct inodo is: %lu\n", sizeof(struct inodo));
+    //printf("Sizeof struct inodo is: %lu\n", sizeof(struct inodo));
 
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)

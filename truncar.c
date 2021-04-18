@@ -42,6 +42,7 @@ int main(int argc, char **argv)
             return ERROR;
         }
 
+        //Imprimim les dades del inode
         printf("DATOS INODO %d \n", atoi(argv[2]));
         imprimir_stat(&p_stat);
 
