@@ -390,3 +390,129 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
         }
     }
 }
+
+/*
+int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsigned int nbytes)
+{
+
+    struct inodo inodo;
+    if (leer_inodo(ninodo, &inodo) == ERROR)
+    {
+        return ERROR;
+    }
+    int leidos = 0;
+    //printf("Numero inodo: %d \n", ninodo);
+
+    if ((inodo.permisos & 4) != 4)
+    {
+        printf("No tienes permisos de lectura en el inodo indicado \n");
+        return leidos;
+    }
+    else
+    {
+        //Volem  començar a llegir més enllà del EOF.
+        if (offset >= inodo.tamEnBytesLog)
+        {
+            return leidos;
+        }
+        //Volem llegir més enllà del EOF.
+        if ((offset + nbytes) >= inodo.tamEnBytesLog)
+        {
+            //Llegim només els bytes que podem desde l'offset fins al EOF.
+            nbytes = inodo.tamEnBytesLog - offset;
+        }
+        //Calculam el primer bloc en el que hem d'escriure.
+        int primerBL = offset / BLOCKSIZE;
+        //Calculam el darrer bloc en el que hem d'escriure.
+        int ultimoBL = (offset + nbytes - 1) / BLOCKSIZE;
+        //Calculam el desplaçament dins el bloc.
+        int desp1 = offset % BLOCKSIZE;
+        //Calculam el desplaçament en el bloc per veure fins on arriben els nbytes escrits.
+        int desp2 = (offset + nbytes - 1) % BLOCKSIZE;
+
+        int nbfisico;
+        unsigned char buf_bloque[BLOCKSIZE];
+
+        //El buffer a llegit es troba un ÚNIC bloc.
+        if (primerBL == ultimoBL)
+        {
+            //Obtenim el valor del bloc físic associat al bloc lògic a llegir.
+            nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
+            //printf("Valor nbfisico: %d\n",nbfisico);
+            //Bloc físic no existeix.
+            if (nbfisico != ERROR)
+            {
+                //El bloc físic si que existeix.
+                //Lectura i increment del valor dels bytes llegits.
+                if (bread(nbfisico, buf_bloque) == ERROR)
+                {
+                    //Error en la lectura.
+                    fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                    return ERROR;
+                }
+                //leidos += nbytes;
+                //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
+                memcpy(buf_original, buf_bloque + desp1, nbytes);
+                //Retonam la quantitat de bytes llegits del únic bloc llegit.
+            }
+            leidos = nbytes;
+            return leidos;
+        }
+        else
+        {
+            nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
+            //printf("Valor nbfisico: %d\n",nbfisico);
+            //Bloc físic no existeix.
+            if (nbfisico != ERROR)
+            {
+                //El bloc físic si que existeix.
+                //Tracament per al primer bloc lògic.
+                if (bread(nbfisico, buf_bloque) == ERROR)
+                {
+                    //Error en la lectura.
+                    fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                    return ERROR;
+                }
+                //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
+                memcpy(buf_original, buf_bloque + desp1, BLOCKSIZE - desp1);
+                //Tractament pels blocs lògics intermitjos.
+            }
+            leidos += BLOCKSIZE - desp1;
+
+            for (int i = primerBL + 1; i < ultimoBL; i++)
+            {
+                nbfisico = traducir_bloque_inodo(ninodo, i, 0);
+                //printf("Valor nbfisico: %d\n",nbfisico);
+                //Bloc físic no existeix.
+                if (nbfisico != ERROR)
+                {
+                    bread(nbfisico, buf_bloque);
+                    memcpy(buf_original + (BLOCKSIZE - desp1) + (i - primerBL - 1) * BLOCKSIZE, buf_bloque, BLOCKSIZE);
+                }
+                leidos += BLOCKSIZE;
+            }
+            //Tractamnet per al darrer bloc lògic a llegir.
+            nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 0);
+            //printf("Valor nbfisico: %d\n",nbfisico);
+            //Bloc físic no existeix.
+            if (nbfisico != ERROR)
+            {
+                //Bloc físic si existeix.
+                if (bread(nbfisico, buf_bloque) == ERROR)
+                {
+                    //Error en la lectura.
+                    fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                    return ERROR;
+                }
+                memcpy(buf_original + (nbytes - desp2 - 1), buf_bloque, desp2 + 1);
+            }
+            leidos += desp2 + 1;
+            //Retonam la quantitat de bytes llegits de n blocs.
+            return leidos;
+        }
+
+        return EXIT_SUCCESS;
+    }
+}
+*/
+
