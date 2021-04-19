@@ -34,7 +34,8 @@ int main(int argc, char **argv)
             leidos = mi_read_f(atoi(argv[2]), buffer_texto, offset, TAMBUFFER);
             offset += TAMBUFFER;
         }
-        printf("\n");
+        sprintf(string, "\n");
+        write(2, string, strlen(string));
         //Obtenim el tamany en bytes logics del inode en concret.
         //Ho imprimim per la sortida d'errors (2) per que no surti a l'arxiu si redireccionam l'output de la terminal.
         struct STAT p_stat;
