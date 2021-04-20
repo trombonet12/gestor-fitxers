@@ -794,10 +794,8 @@ int liberar_inodo(unsigned int ninodo)
         printf("ERROR: No se ha podido liberar los bloques.\n");
         return ERROR;
     }
-    printf("bloquesLiberados: %d \n", bloquesLiberados);
     //Decrementam el valor de la varibale de l'inde amb el retorn de liberar_bloques_inodo.
     inodo.numBloquesOcupados -= bloquesLiberados;
-    printf("numBloquesOcupados: %d\n", inodo.numBloquesOcupados);
     //Comprovam que hem alliberat el blocs associats al inode.
     if (inodo.numBloquesOcupados == 0)
     {
@@ -970,5 +968,6 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
             }
         }
     }
+    printf("liberar_bloques_inodo()→ total bloques liberados: %d \n", liberados);
     return liberados;
 }

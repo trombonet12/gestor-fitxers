@@ -45,7 +45,7 @@ int main(int argc, char **argv)
             return ERROR;
         }
         //Imprimim les dades
-        sprintf(string, "Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
+        sprintf(string, "Tamaño en bytes logicos: %d \n", p_stat.tamEnBytesLog);
         write(2, string, strlen(string));
         sprintf(string, "Total_leidos: %d\n", total_leidos);
         write(2, string, strlen(string));

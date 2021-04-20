@@ -43,8 +43,10 @@ int main(int argc, char **argv)
         }
 
         //Imprimim les dades del inode
+        printf("\n");
         printf("DATOS INODO %d \n", atoi(argv[2]));
         imprimir_stat(&p_stat);
+        printf("\n");
 
         //Tancam l'enllaç amb el dispositiu virutal.
         if (bumount() < 0)
