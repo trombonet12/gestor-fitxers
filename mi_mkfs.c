@@ -1,6 +1,6 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
 
-#include "ficheros_basico.h"
+#include "directorios.h"
 //Declaram una varibale que contendrà el contigut a llegir o escriure. REALEMNT QUE FA
 unsigned char *buffer[BLOCKSIZE];
 
@@ -25,32 +25,32 @@ int main(int argc, char **argv)
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
     }
-    
+
     //Inicialitzam tots el metadatos
     if (tamMB(atoi(argv[2])) == ERROR)
     {
         printf("ERROR_MKFS: Error en la funcion tamMB\n");
         return ERROR;
     }
-    
+
     if (tamAI(atoi(argv[2]) / 4) == ERROR)
     {
         printf("ERROR_MKFS: Error en la funcion tamAI\n");
         return ERROR;
     }
-    
+
     if (initSB(atoi(argv[2]), atoi(argv[2]) / 4) == ERROR)
     {
         printf("ERROR_MKFS: Error en la funcion initSB\n");
         return ERROR;
     }
-    
+
     if (initMB() == ERROR)
     {
         printf("ERROR_MKFS: Error en la funcion initMB\n");
         return ERROR;
     }
-    
+
     if (initAI() == ERROR)
     {
         printf("ERROR_MKFS: Error en la funcion initAI\n");
@@ -62,6 +62,15 @@ int main(int argc, char **argv)
 
     //Tancam l'enllaç amb el dispositiu virutal.
     if (bumount() < 0)
+    {
+        //Control d'erros.
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+    }
+
+    char str[] = "/home/Documentos/banana.txt";
+    char inicial[strlen(str)];
+    char final[strlen(str)];
+    if (extraer_camino(str, inicial, final, NULL) != 0)
     {
         //Control d'erros.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
