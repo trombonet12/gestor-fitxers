@@ -1,6 +1,6 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
 
-#include "ficheros.h"
+#include "directorios.h"
 
 int main(int argc, char **argv)
 {
@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     printf("Quantitat de blocs lliures : %d \n", SB.cantBloquesLibres);                      //Print clarificatiu
     printf("Quantitat de inodes lliures al array de inodes és: %d \n", SB.cantInodosLibres); //Print clarificatiu
     printf("Quantitat de blocs totals és: %d \n", SB.totBloques);                            //Print clarificatiu
-    printf("Quantitat de inodes és: %d \n\n", SB.totInodos);                                   //Print clarificatiu
+    printf("Quantitat de inodes és: %d \n\n", SB.totInodos);                                 //Print clarificatiu
     //printf("Tamany de SB: %lu \n", sizeof(struct superbloque));                              //Print clarificatiu
 
     //printf("Sizeof struct inodo is: %lu\n", sizeof(struct inodo));
