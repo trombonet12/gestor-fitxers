@@ -19,5 +19,5 @@ struct entrada
 };
 
 void mostrar_error_buscar_entrada(int error);
-int extraer_camino(const char *camino, char *inicial, char *final, char *tipo);
+int extraer_camino(const char *camino, char *inicial, char *final);
 int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsigned int *p_inodo, unsigned int *p_entrada, char reservar, unsigned char permisos);

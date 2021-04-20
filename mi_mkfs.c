@@ -67,12 +67,8 @@ int main(int argc, char **argv)
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    char str[] = "/home/Documentos/banana.txt";
+    char str[] = "/banana.txt";
     char inicial[strlen(str)];
     char final[strlen(str)];
-    if (extraer_camino(str, inicial, final, NULL) != 0)
-    {
-        //Control d'erros.
-        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-    }
+    extraer_camino(str, inicial, final);
 }

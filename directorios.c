@@ -3,8 +3,14 @@
 #include "directorios.h"
 
 //Mètode que separa en dos (inicial i final),  la cadena de caràcters camino.
-int extraer_camino(const char *camino, char *inicial, char *final, char *tipo)
+int extraer_camino(const char *camino, char *inicial, char *final)
 {
+    //Control d'errors.
+    if (camino == NULL || camino[0] != '/')
+    {
+        printf("ERROR extraer_camino: camino vale NULL o no empieza con '/'\n");
+        return ERROR;
+    }
     //Declaram un string auxiliar per poder modificar el contingut de camino.
     char aux[strlen(camino)];
     //Copiam el contingut de camino a aux.
@@ -12,24 +18,37 @@ int extraer_camino(const char *camino, char *inicial, char *final, char *tipo)
 
     //Declaram el separador que emplearem a strtok.
     const char s[1] = "/";
-    printf("Camino: %s\n", aux);
     //Agafam el contingut de inicial
     inicial = strtok(aux, s);
-    printf("Longitud inicial %ld \n", strlen(inicial));
-    printf("Lletra: %c\n", camino[strlen(inicial) + 1]);
-    printf("Camino: %s\nInicial: %s\n", aux, inicial);
-
+    //Comprovam que strtok s'ha executat correctament.
+    if (inicial == NULL)
+    {
+        printf("ERROR extraer_camino: Error en la ejecucion del strtok\n");
+        return ERROR;
+    }
+    //Comprovam si el que ens han passat es un fitxer o un directori.
     if ((camino[strlen(inicial) + 1]) == '/')
     {
-        printf("Longitud inicial %ld \n", strlen(inicial));
-        printf("Longitud camino %ld \n", strlen(camino));
-        printf("Longitud camino-inicial %ld \n", strlen(camino) - strlen(inicial));
-        printf("CAmino+inicial: %s\n", camino + (strlen(inicial) + 1));
+        //Copiam la resta de la ruta a final.
         strcpy(final, camino + strlen(inicial) + 1);
+        //Imprimim les dades per claretat dels tests PROVISIONALS.
+        printf("Camino: %s\nInicial: %s\n", camino, inicial);
+        printf("Tipo: 'd' \n");
         printf("Final: %s \n", final);
+        //Retornam 1 per indicar que es un directori.
+        return 1;
     }
-    printf("LOLOLOLOLLOL\n");
-    return 0;
+    else
+    {
+        //Copiam el nom del arxiu sense la / inicial.
+        strcpy(inicial, camino + 1);
+        //Imprimim les dades per claretat dels tests PROVISIONALS.
+        printf("Camino: %s\nInicial: %s\n", camino, inicial);
+        printf("Tipo: 'f' \n");
+        printf("Final: %s \n", final);
+        //Retornam 0 per indicar que es un arxiu
+        return 0;
+    }
 }
 
 //Mètode que, donat un nombre, indica quin error està associat a ell-
