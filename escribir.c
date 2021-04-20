@@ -41,7 +41,7 @@ int main(int argc, char **argv)
                     printf("ERROR_ESCRIBIR: Error a la hora de obtener los datos de un inodo.\n");
                     return ERROR;
                 }
-                fprintf(stderr, "Tamaño en bytes logicos: %d: \n", p_stat.tamEnBytesLog);
+                fprintf(stderr, "Tamaño en bytes logicos: %d \n", p_stat.tamEnBytesLog);
                 fprintf(stderr, "Num Bloques Ocupados: %d \n\n", p_stat.numBloquesOcupados);
             }
         }

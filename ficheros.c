@@ -282,7 +282,7 @@ void imprimir_stat(struct STAT *p_stat)
 
     //Imprimim les dades solicitades
     printf("El tipo del INODE es: %c\n", p_stat->tipo);
-    printf("Los permisos del INODE es: %c\n", p_stat->permisos);
+    printf("Los permisos del INODE es: %d\n", p_stat->permisos);
     printf("ATIME: %sMTIME: %sCTIME: %s", atime, mtime, ctime);
     printf("Los nlinks del INODE es: %d\n", p_stat->nlinks);
     printf("El tamEnBytesLog del INODE es: %d\n", p_stat->tamEnBytesLog);
