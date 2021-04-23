@@ -64,7 +64,7 @@ int initSB(unsigned int nbloques, unsigned int ninodos)
 
     if (bwrite(posSB, &SB) == ERROR)
     {
-        //Error amb ñ'escriptura
+        //Error amb L'escriptura
         return fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         return ERROR;
     }
@@ -516,6 +516,7 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
     {
         //Error en la lectura.
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
     }
     //Comprovam que hi hagui inodes lliures.
     if (SB.cantInodosLibres > 0)
@@ -559,6 +560,7 @@ int reservar_inodo(unsigned char tipo, unsigned char permisos)
         {
             //Error amb l'escriptura
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            return ERROR;
         }
         //Retornam la posicio del inode reservat.
         return posInodoReservado;
