@@ -67,8 +67,4 @@ int main(int argc, char **argv)
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
     }
 
-    char str[] = "/banana.txt";
-    char inicial[strlen(str)];
-    char final[strlen(str)];
-    extraer_camino(str, inicial, final);
 }
