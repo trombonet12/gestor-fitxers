@@ -18,7 +18,8 @@ int extraer_camino(const char *camino, char *inicial, char *final)
     //Declaram el separador que emplearem a strtok.
     const char s[1] = "/";
     //Agafam el contingut de inicial
-    inicial = strtok(aux, s);
+    //inicial = strtok(aux, s);
+    strcpy(inicial,strtok(aux, s));
     //Comprovam que strtok s'ha executat correctament.
     if (inicial == NULL)
     {
@@ -31,7 +32,7 @@ int extraer_camino(const char *camino, char *inicial, char *final)
         //Copiam la resta de la ruta a final.
         strcpy(final, camino + strlen(inicial) + 1);
         //Imprimim les dades per claretat dels tests PROVISIONALS.
-        printf("Extraer camino --> Camino: %s, Inicial: %s, Final: %s , Tipo: d \n", camino, inicial, final);
+        printf("Extraer camino --> Camino: %s, Inicial: %s, Final: %s , Tipo: d (1)\n", camino, inicial, final);
         //Retornam 1 per indicar que es un directori.
         return 1;
     }
@@ -40,7 +41,7 @@ int extraer_camino(const char *camino, char *inicial, char *final)
         //Copiam el nom del arxiu sense la / inicial.
         strcpy(inicial, camino + 1);
         //Imprimim les dades per claretat dels tests PROVISIONALS.
-        printf("Extraer camino --> Camino: %s, Inicial: %s, Final: %s , Tipo: f \n", camino, inicial, final);
+        printf("Extraer camino --> Camino: %s, Inicial: %s, Final: %s , Tipo: f (0) \n", camino, inicial, final);
         //Retornam 0 per indicar que es un arxiu
         return 0;
     }
@@ -94,22 +95,22 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         return EXIT_FAILURE;
     }
-    printf("camino_parcial: %s: \n", camino_parcial);
+    printf("camino_parcial: %s \n", camino_parcial);
     //Comprovam si ens trobam al directori arrel.
     if (strcmp(camino_parcial, "/") == 0)
     {
         *p_inodo = SB.posInodoRaiz;
         //És la primera entrada de totes.
         *p_entrada = 0;
-        printf("Som al dirctori arrel");
+        printf("Som al directori arrel\n");
         return 0;
     }
 
-    //Dividr el camino_parcial amb inicial i final.
+    //Dividir el camino_parcial amb inicial i final.
     tipo = extraer_camino(camino_parcial, inicial, final);
-    printf("camino parcial: %s", camino_parcial);
-    printf("inical: %s", inicial);
-    printf("final: %s", final);
+    printf("camino parcial: %s ", camino_parcial);
+    printf("inical: %s ", inicial);
+    printf("final: %s ", final);
     printf("tipo: %d \n", tipo);
     if (tipo == ERROR)
     {
@@ -145,12 +146,13 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         while ((num_entrada_inodo < cant_entradas_inodo) && (!strcmp(inicial, entrada.nombre)))
         {
             num_entrada_inodo++;
+            offset+=sizeof(entrada);
             memset(&entrada, 0, sizeof(entrada));
             mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
         }
     }
     //Cas entrada no existeix.
-    if ((num_entrada_inodo == cant_entradas_inodo) && (strcmp(inicial, entrada.nombre) != 0))
+    if ((strcmp(inicial, entrada.nombre) != 0))
     {
         switch (reservar)
         {
@@ -173,14 +175,14 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
             }
             else
             {
-                printf("Inicial: %s" ,inicial);
+                printf("Inicial: %s " ,inicial);
                 strcpy(entrada.nombre, inicial);
                 //printf("Inicial: %s, entrada.nombre: %s", inicial, entrada.nombre);
                 //Directori
                 
                 if (tipo == 1)
                 {
-                    printf("final: %s", final);
+                    printf("Final: %s\n", final);
                     if (strcmp(final, "/") == 0)
                     {
                         inodoReservado = reservar_inodo('d', permisos);
@@ -195,7 +197,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     }
                     else
                     {
-                        printf("No son iguals");
+                        //printf("No son iguals\n");
                         //Penjen més directoris o fitxers.
                         return ERROR_NO_EXISTE_DIRECTORIO_INTERMEDIO;
                     }
