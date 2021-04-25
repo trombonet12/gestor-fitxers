@@ -32,7 +32,7 @@ int extraer_camino(const char *camino, char *inicial, char *final)
         //Copiam la resta de la ruta a final.
         strcpy(final, camino + strlen(inicial) + 1);
         //Imprimim les dades per claretat dels tests PROVISIONALS.
-        printf("Extraer camino --> Camino: %s, Inicial: %s, Final: %s , Tipo: d (1)\n", camino, inicial, final);
+        printf("Extraer camino --> Camino: %s, Inicial: %s, Final:%s+ , Tipo: d (1)\n", camino, inicial, final);
         //Retornam 1 per indicar que es un directori.
         return 1;
     }
@@ -40,8 +40,9 @@ int extraer_camino(const char *camino, char *inicial, char *final)
     {
         //Copiam el nom del arxiu sense la / inicial.
         strcpy(inicial, camino + 1);
+        strcpy(final,"");
         //Imprimim les dades per claretat dels tests PROVISIONALS.
-        printf("Extraer camino --> Camino: %s, Inicial: %s, Final: %s , Tipo: f (0) \n", camino, inicial, final);
+        printf("Extraer camino --> Camino: %s, Inicial: %s, Final:%s+ , Tipo: f (0) \n", camino, inicial, final);
         //Retornam 0 per indicar que es un arxiu
         return 0;
     }
@@ -89,13 +90,14 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     int cant_entradas_inodo, num_entrada_inodo;
     int inodoReservado = 0;
 
+        printf("**p_inodo: %d \n", *p_inodo);
+        printf("**p_entrada: %d \n", *p_entrada);
     //Lectura del SB.
     if (bread(posSB, &SB) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         return EXIT_FAILURE;
     }
-    printf("camino_parcial: %s \n", camino_parcial);
     //Comprovam si ens trobam al directori arrel.
     if (strcmp(camino_parcial, "/") == 0)
     {
@@ -108,10 +110,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
 
     //Dividir el camino_parcial amb inicial i final.
     tipo = extraer_camino(camino_parcial, inicial, final);
-    printf("camino parcial: %s ", camino_parcial);
-    printf("inical: %s ", inicial);
-    printf("final: %s ", final);
-    printf("tipo: %d \n", tipo);
+    printf("Tipo 1--> directorio// Tipo 0--> fichero: %d \n", tipo);
     if (tipo == ERROR)
     {
         return ERROR_CAMINO_INCORRECTO;
@@ -132,8 +131,10 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
 
     //Calculam la quantitat de entrades que té l'inode corresponent.
     cant_entradas_inodo = inodo_dir.tamEnBytesLog / sizeof(entrada);
+    printf("Calculo cant_entradas_inodo de inodo_dir: %d\n", cant_entradas_inodo);
     //Número de entrada inicial.
     num_entrada_inodo = 0;
+    printf("num_entrada_inodo antes del while: %d\n", num_entrada_inodo);
     //struct entrada array_entradas[BLOCKSIZE / sizeof(entrada)];
 
     memset(&entrada, 0, sizeof(entrada));
@@ -142,16 +143,21 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     if (cant_entradas_inodo > 0)
     {
         mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
+        printf("primer read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre,entrada.ninodo);
         //mi_read_f(*p_inodo_dir, array_entradas, offset, BLOCKSIZE);
-        while ((num_entrada_inodo < cant_entradas_inodo) && (!strcmp(inicial, entrada.nombre)))
+        while ((num_entrada_inodo < cant_entradas_inodo) && (strcmp(inicial, entrada.nombre)) != 0)
         {
             num_entrada_inodo++;
             offset+=sizeof(entrada);
             memset(&entrada, 0, sizeof(entrada));
             mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
+            printf("dentro while--> read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre,entrada.ninodo);
         }
     }
+    printf("num_entrada_inodo después del while: %d\n", num_entrada_inodo);
     //Cas entrada no existeix.
+    printf("antes del switch Inicial: %s \n", inicial);
+    printf("antes del switch entrada.nombre val: %s \n", entrada.nombre);
     if ((strcmp(inicial, entrada.nombre) != 0))
     {
         switch (reservar)
@@ -175,29 +181,26 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
             }
             else
             {
-                printf("Inicial: %s " ,inicial);
+                printf(" Antes del strcpy --> Inicial: %s, entrada.nombre: %s \n", inicial, entrada.nombre);
                 strcpy(entrada.nombre, inicial);
-                //printf("Inicial: %s, entrada.nombre: %s", inicial, entrada.nombre);
+                printf(" Despues del strcpy --> Inicial: %s, entrada.nombre: %s \n", inicial, entrada.nombre);
                 //Directori
                 
                 if (tipo == 1)
                 {
-                    printf("Final: %s\n", final);
                     if (strcmp(final, "/") == 0)
                     {
                         inodoReservado = reservar_inodo('d', permisos);
+                        printf("Reservado inodo %d tipo d con permisos %d para %s \n", inodoReservado,permisos,inicial);
                         if (inodoReservado == ERROR)
                         {
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                             return EXIT_FAILURE;
                         }
-
-                    printf("inodoReservado: %d \n", inodoReservado);
                         entrada.ninodo = inodoReservado;
                     }
                     else
                     {
-                        //printf("No son iguals\n");
                         //Penjen més directoris o fitxers.
                         return ERROR_NO_EXISTE_DIRECTORIO_INTERMEDIO;
                     }
@@ -205,21 +208,24 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 else
                 {
                     inodoReservado = reservar_inodo('f', permisos);
+                    printf("Reservado inodo %d tipo f con permisos %d para %s \n", inodoReservado,permisos,inicial);
                     if (inodoReservado == ERROR)
                     {
                         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                         return EXIT_FAILURE;
                     }
-                    printf("inodoReservado: %d \n", inodoReservado);
                     entrada.ninodo = inodoReservado;
                 }
-                if (mi_write_f(inodoReservado, &entrada, num_entrada_inodo*sizeof(entrada), sizeof(entrada)) == ERROR)
+                printf("entrada.ninodo: %d \n", entrada.ninodo);
+                printf("entrada.nombre: %s \n", entrada.nombre);
+                if (mi_write_f(*p_inodo_dir, &entrada, inodo_dir.tamEnBytesLog, sizeof(entrada)) == ERROR)
                 {
+                    printf("Error en la escritura");
                     if (entrada.ninodo != -1)
                     {
                         if (liberar_inodo(entrada.ninodo) == ERROR)
                         {
-                            printf("Liberamos el inodo");
+                            printf("Liberamos el inodo \n");
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                         }
                     }
@@ -228,18 +234,23 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
             }
         }
     }
-    if (strcmp(final, "/") == 0){
-        printf("num_entradas: %d \n", num_entrada_inodo);
-        printf("cant_entrdas_inodo: %d\n", cant_entradas_inodo);
+    if ((strcmp(final, "/") == 0)||(strcmp(final,"") == 0)){
+        printf("Cortamos la recursividad \n");
         if((num_entrada_inodo < cant_entradas_inodo) && (reservar = 1)){
             return ERROR_ENTRADA_YA_EXISTENTE;
         }
-        *p_inodo = inodoReservado;
+        *p_inodo = entrada.ninodo;
+        printf("*p_inodo: %d \n", *p_inodo);
         *p_entrada = num_entrada_inodo;
+        printf("*p_entrada: %d \n", *p_entrada);
         return EXIT_SUCCESS;
 
     }else{
+        printf("Hay recursividad \n");
         *p_inodo_dir = entrada.ninodo;
+        printf("*p_inodo_dir: %d \n", *p_inodo_dir);
+        printf("final : %s \n", final);
+
         return buscar_entrada(final,p_inodo_dir,p_inodo, p_entrada, reservar, permisos);
     }
     return EXIT_SUCCESS;
