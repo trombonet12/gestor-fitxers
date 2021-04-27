@@ -19,7 +19,7 @@ int extraer_camino(const char *camino, char *inicial, char *final)
     const char s[1] = "/";
     //Agafam el contingut de inicial
     //inicial = strtok(aux, s);
-    strcpy(inicial,strtok(aux, s));
+    strcpy(inicial, strtok(aux, s));
     //Comprovam que strtok s'ha executat correctament.
     if (inicial == NULL)
     {
@@ -40,7 +40,7 @@ int extraer_camino(const char *camino, char *inicial, char *final)
     {
         //Copiam el nom del arxiu sense la / inicial.
         strcpy(inicial, camino + 1);
-        strcpy(final,"");
+        strcpy(final, "");
         //Imprimim les dades per claretat dels tests PROVISIONALS.
         printf("Extraer camino --> Camino: %s, Inicial: %s, Final:%s+ , Tipo: f (0) \n", camino, inicial, final);
         //Retornam 0 per indicar que es un arxiu
@@ -90,8 +90,8 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     int cant_entradas_inodo, num_entrada_inodo;
     int inodoReservado = 0;
 
-        printf("**p_inodo: %d \n", *p_inodo);
-        printf("**p_entrada: %d \n", *p_entrada);
+    printf("**p_inodo: %d \n", *p_inodo);
+    printf("**p_entrada: %d \n", *p_entrada);
     //Lectura del SB.
     if (bread(posSB, &SB) == ERROR)
     {
@@ -143,15 +143,15 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     if (cant_entradas_inodo > 0)
     {
         mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
-        printf("primer read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre,entrada.ninodo);
+        printf("primer read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre, entrada.ninodo);
         //mi_read_f(*p_inodo_dir, array_entradas, offset, BLOCKSIZE);
         while ((num_entrada_inodo < cant_entradas_inodo) && (strcmp(inicial, entrada.nombre)) != 0)
         {
             num_entrada_inodo++;
-            offset+=sizeof(entrada);
+            offset += sizeof(entrada);
             memset(&entrada, 0, sizeof(entrada));
             mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
-            printf("dentro while--> read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre,entrada.ninodo);
+            printf("dentro while--> read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre, entrada.ninodo);
         }
     }
     printf("num_entrada_inodo después del while: %d\n", num_entrada_inodo);
@@ -185,13 +185,13 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 strcpy(entrada.nombre, inicial);
                 printf(" Despues del strcpy --> Inicial: %s, entrada.nombre: %s \n", inicial, entrada.nombre);
                 //Directori
-                
+
                 if (tipo == 1)
                 {
                     if (strcmp(final, "/") == 0)
                     {
                         inodoReservado = reservar_inodo('d', permisos);
-                        printf("Reservado inodo %d tipo d con permisos %d para %s \n", inodoReservado,permisos,inicial);
+                        printf("Reservado inodo %d tipo d con permisos %d para %s \n", inodoReservado, permisos, inicial);
                         if (inodoReservado == ERROR)
                         {
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -208,7 +208,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 else
                 {
                     inodoReservado = reservar_inodo('f', permisos);
-                    printf("Reservado inodo %d tipo f con permisos %d para %s \n", inodoReservado,permisos,inicial);
+                    printf("Reservado inodo %d tipo f con permisos %d para %s \n", inodoReservado, permisos, inicial);
                     if (inodoReservado == ERROR)
                     {
                         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -234,9 +234,11 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
             }
         }
     }
-    if ((strcmp(final, "/") == 0)||(strcmp(final,"") == 0)){
+    if ((strcmp(final, "/") == 0) || (strcmp(final, "") == 0))
+    {
         printf("Cortamos la recursividad \n");
-        if((num_entrada_inodo < cant_entradas_inodo) && (reservar = 1)){
+        if ((num_entrada_inodo < cant_entradas_inodo) && (reservar == 1))
+        {
             return ERROR_ENTRADA_YA_EXISTENTE;
         }
         *p_inodo = entrada.ninodo;
@@ -244,14 +246,58 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         *p_entrada = num_entrada_inodo;
         printf("*p_entrada: %d \n", *p_entrada);
         return EXIT_SUCCESS;
-
-    }else{
+    }
+    else
+    {
         printf("Hay recursividad \n");
         *p_inodo_dir = entrada.ninodo;
         printf("*p_inodo_dir: %d \n", *p_inodo_dir);
         printf("final : %s \n", final);
 
-        return buscar_entrada(final,p_inodo_dir,p_inodo, p_entrada, reservar, permisos);
+        return buscar_entrada(final, p_inodo_dir, p_inodo, p_entrada, reservar, permisos);
+    }
+    return EXIT_SUCCESS;
+}
+
+int mi_creat(const char *camino, unsigned char permisos)
+{
+    //Declaram les variables necessaries.
+    unsigned int p_inodo_dir = 0;
+    unsigned int p_inodo = 0;
+    unsigned int p_entrada = 0;
+    int error;
+    //Crida a buscar_entrada per reservar un inode amb control d'errors.
+    if ((error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 1, permisos)) < 0)
+    {
+        mostrar_error_buscar_entrada(error);
+        return ERROR;
+    }
+    return EXIT_SUCCESS;
+}
+
+//Funcio que canvia els permisos del inode associat a la ruta passada per parametre.
+int mi_chmod(const char *camino, unsigned char permisos)
+{
+    //Declaram les variables necessaries.
+    unsigned int p_inodo_dir = 0;
+    unsigned int p_inodo = 0;
+    unsigned int p_entrada = 0;
+    int error;
+
+    //Obtenim el numero del inode corresponent a la ruta.
+    if ((error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, permisos)) < 0)
+    {
+        //En cas d'error avisam al usuari.
+        mostrar_error_buscar_entrada(error);
+        return ERROR;
+    }
+
+    //Canviam els permisos del inode obtingut.
+    if (ERROR == (mi_chmod_f(p_inodo, permisos)))
+    {
+        //Control d'errors.
+        printf("ERROR: Error durante el cambio de permisos. \n");
+        return ERROR;
     }
     return EXIT_SUCCESS;
 }
