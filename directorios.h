@@ -10,6 +10,8 @@
 #define ERROR_PERMISO_ESCRITURA -5
 #define ERROR_ENTRADA_YA_EXISTENTE -6
 #define ERRROR_NO_SE_PUEDE_CREAR_ENTRADA_EN_UN_FICHERO -7
+#define TAMFILA 100
+#define TAMBUFFER (TAMFILA*1000)
 
 //Declaració del strcut entrada.
 struct entrada
@@ -23,3 +25,5 @@ int extraer_camino(const char *camino, char *inicial, char *final);
 int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsigned int *p_inodo, unsigned int *p_entrada, char reservar, unsigned char permisos);
 int  mi_creat(const char *camino,unsigned char permisos);
 int mi_chmod(const char *camino,unsigned char permisos);
+int mi_stat(const char *camino, struct STAT *p_stat);
+int mi_dir(const char *camino,char *buffer);
