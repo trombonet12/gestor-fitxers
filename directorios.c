@@ -301,3 +301,102 @@ int mi_chmod(const char *camino, unsigned char permisos)
     }
     return EXIT_SUCCESS;
 }
+
+//Funcio que imprimeix les dades d'un inode en base a una ruta pasada per parametre.
+int mi_stat(const char *camino, struct STAT *p_stat)
+{
+    //Declaram les variables necessaries.
+    unsigned int p_inodo_dir = 0;
+    unsigned int p_inodo = 0;
+    unsigned int p_entrada = 0;
+    int error;
+
+    //Obtenim el numero del inode corresponent a la ruta.
+    if ((error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 0)) < 0)
+    {
+        //En cas d'error avisam al usuari.
+        mostrar_error_buscar_entrada(error);
+        return ERROR;
+    }
+    //Obtenim les dades del inode retornat per buscar_entrada.
+    if (ERROR == (mi_stat_f(p_inodo, p_stat)))
+    {
+        //Control d'errors.
+        printf("ERROR: Error durante la obtencion de los datos del inodo. \n");
+        return ERROR;
+    }
+    //Imprimim les dades obtingudes.
+    imprimir_stat(p_stat);
+    return EXIT_SUCCESS;
+}
+
+int mi_dir(const char *camino, char *buffer)
+{
+    //Declaram les variables necessaries.
+    unsigned int p_inodo_dir = 0;
+    unsigned int p_inodo = 0;
+    unsigned int p_entrada = 0;
+    int error;
+
+    //Obtenim el numero del inode corresponent a la ruta.
+    if ((error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 0)) < 0)
+    {
+        //En cas d'error avisam al usuari.
+        mostrar_error_buscar_entrada(error);
+        return ERROR;
+    }
+
+    //Declaram les variables necesaries per fer la llista d'inodes
+    struct entrada entrada;
+    struct inodo inodo;
+    int cant_entradas_inodo;
+
+    //Lectura inode tret de la ruta pasada per parametre.
+    if (leer_inodo(p_inodo, &inodo) == ERROR)
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return EXIT_FAILURE;
+    }
+    //Calculam quants d'elements tendra la llista.
+    cant_entradas_inodo = inodo.tamEnBytesLog / sizeof(entrada);
+    //Preparam les variables que ens ajudaran a costruir el buffer.
+    int offset = 0;
+    char aux[50];
+    struct tm *tm;
+
+    //Guardam al buffer el titol del ls.
+    sprintf(aux, "Total: %d\n", cant_entradas_inodo);
+    strcat(buffer, aux);
+    strcat(buffer, "Nombre \tTipo \tPermisos \tmTime \t\t\tTamaño\n----------------------------------------------------------------\n");
+    //Bucle que llegira totes les entrades del inode pare.
+    for (int i = 0; i < cant_entradas_inodo; i++)
+    {
+        //Llegim una entrada del directori.
+        memset(&entrada, 0, sizeof(entrada));
+        mi_read_f(p_inodo, &entrada, offset, sizeof(entrada));
+        offset += sizeof(entrada);
+        //Obtenim les dades del inode associat.
+        if (leer_inodo(entrada.ninodo, &inodo) == ERROR)
+        {
+            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            return EXIT_FAILURE;
+        }
+        //Ficam al buffer les dades obtingudes.
+        strcat(buffer, entrada.nombre);
+        strcat(buffer,"\t");
+        sprintf(aux, "%c\t", inodo.tipo);
+        strcat(buffer, aux);
+        if (inodo.permisos & 4) strcat(buffer, "r"); else strcat(buffer, "-");
+        if (inodo.permisos & 2) strcat(buffer, "w"); else strcat(buffer, "-");
+        if (inodo.permisos & 1) strcat(buffer, "x"); else strcat(buffer, "-");
+        strcat(buffer,"\t\t");
+        
+        tm = localtime(&inodo.mtime);
+        sprintf(aux, "%d-%02d-%02d %02d:%02d:%02d\t", tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min,  tm->tm_sec);
+        strcat(buffer,aux);
+        sprintf(aux, "%d\n", inodo.tamEnBytesLog);
+        strcat(buffer, aux);
+
+    }
+    return EXIT_SUCCESS;
+}
