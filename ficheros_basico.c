@@ -701,13 +701,13 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
                 {
                     //El bloc pescritosenja directament de l'inode.
                     inodo.punterosIndirectos[nRangoBL - 1] = ptr;
-                    fprintf(stderr,"inodo.punterosIndirectos[%d]: %d \n", nRangoBL - 1, ptr);
+                    //fprintf(stderr,"inodo.punterosIndirectos[%d]: %d \n", nRangoBL - 1, ptr);
                 }
                 else
                 {
                     //El bloc penja d'un altre bloc de punters.
                     buffer[indice] = ptr;
-                    fprintf(stderr,"punteros_nivel%d[%d] = %d \n", nivel_punteros + 1, indice, ptr);
+                    //fprintf(stderr,"punteros_nivel%d[%d] = %d \n", nivel_punteros + 1, indice, ptr);
                     bwrite(ptr_ant, buffer);
                 }
             }
@@ -754,12 +754,10 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
             if (nRangoBL == 0)
             {
                 inodo.punterosDirectos[nblogico] = ptr;
-                fprintf(stderr,"inodo.punterosDirectos[%d] =  %d \n", nblogico, ptr);
             }
             else
             {
                 buffer[indice] = ptr;
-                fprintf(stderr,"punteros_nivel%d[%d] = %d \n", nivel_punteros + 1, indice, ptr);
                 if (bwrite(ptr_ant, buffer) == ERROR)
                 {
                     fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
