@@ -2,7 +2,7 @@
 
 #include "directorios.h"
 
- 
+ /*
 void mostrar_buscar_entrada(char *camino, char reservar){
   unsigned int p_inodo_dir = 0;
   unsigned int p_inodo = 0;
@@ -15,7 +15,7 @@ void mostrar_buscar_entrada(char *camino, char reservar){
   printf("**********************************************************************\n");
   return;
 }
-
+*/
 
 int main(int argc, char **argv)
 {
@@ -47,7 +47,7 @@ int main(int argc, char **argv)
     printf("Quantitat de blocs totals és: %d \n", SB.totBloques);                            //Print clarificatiu
     printf("Quantitat de inodes és: %d \n\n", SB.totInodos);                                 //Print clarificatiu
 
-     
+  /* 
   mostrar_buscar_entrada("pruebas/", 1); //ERROR_CAMINO_INCORRECTO
   mostrar_buscar_entrada("/pruebas/", 0); //ERROR_NO_EXISTE_ENTRADA_CONSULTA
   mostrar_buscar_entrada("/pruebas/docs/", 1); //ERROR_NO_EXISTE_DIRECTORIO_INTERMEDIO
@@ -60,7 +60,7 @@ int main(int argc, char **argv)
   mostrar_buscar_entrada("/pruebas/docs/doc1", 1); //creamos /pruebas/docs/doc1
   mostrar_buscar_entrada("/pruebas/casos/", 1); //creamos /pruebas/casos/
   mostrar_buscar_entrada("/pruebas/docs/doc2", 1); //creamos /pruebas/docs/doc2
-
+  */
 
 
 
