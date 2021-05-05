@@ -1,11 +1,11 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
 #include "directorios.h"
-#define TAMBUFFER (BLOCKSIZE * 4)
+#define BUFFERTAM 1024
 
 int main(int argc, char **argv)
 {
     //Comprovam la sintaxis
-    if (argc == 5)
+    if (argc == 3)
     {
         //Establim enllaç amb el dispositiu virtual.
         if (bmount(argv[1]) == ERROR)
@@ -13,11 +13,33 @@ int main(int argc, char **argv)
             //Control d'errors.
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
-        if (argv[3][strlen(argv[2]) - 1] != '/')
+        if (argv[2][strlen(argv[2]) - 1] != '/')
         {
-            unsigned char buffer_texto[TAMBUFFER];
-            memset(buffer_texto, 0, TAMBUFFER);
-            mi_read(argv[2], buffer_texto, 0, 0);
+            unsigned char buffer_texto[BUFFERTAM];
+            unsigned char buffer_aux[BUFFERTAM];
+            //Posam a 0 totes les posicions del buffer.
+            memset(buffer_texto, 0, BUFFERTAM);
+            memset(buffer_aux, 0, BUFFERTAM);
+            unsigned int leidos;
+            unsigned int total_leidos = 0;
+            unsigned int offset = 0;
+            char string[128];
+            leidos = mi_read(argv[2], buffer_texto, offset, BUFFERTAM);
+            offset += BUFFERTAM;
+            //Bucle que va llegint tot el contingut y el imprimeix per pantalla
+            while (leidos > 0)
+            {
+                write(1, buffer_texto, leidos);
+
+                memset(buffer_texto, 0, BUFFERTAM);
+                total_leidos += leidos;
+                leidos = mi_read(argv[2], buffer_texto, offset, BUFFERTAM);
+                offset += BUFFERTAM;
+            }
+            sprintf(string, "\n");
+            write(2, string, strlen(string));
+            sprintf(string, "Total_leidos: %d\n", total_leidos);
+            write(2, string, strlen(string));
         }
         else
         {
