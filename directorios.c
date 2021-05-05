@@ -92,8 +92,6 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     int cant_entradas_inodo, num_entrada_inodo;
     int inodoReservado = 0;
 
-    //printf("**p_inodo: %d \n", *p_inodo);
-    //printf("**p_entrada: %d \n", *p_entrada);
     //Lectura del SB.
     if (bread(posSB, &SB) == ERROR)
     {
@@ -133,34 +131,31 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
 
     //Calculam la quantitat de entrades que té l'inode corresponent.
     cant_entradas_inodo = inodo_dir.tamEnBytesLog / sizeof(entrada);
-    //printf("Calculo cant_entradas_inodo de inodo_dir: %d\n", cant_entradas_inodo);
     //Número de entrada inicial.
     num_entrada_inodo = 0;
-    //printf("num_entrada_inodo antes del while: %d\n", num_entrada_inodo);
-    //struct entrada array_entradas[BLOCKSIZE / sizeof(entrada)];
+    struct entrada array_entradas[BLOCKSIZE / sizeof(entrada)];
 
-    memset(&entrada, 0, sizeof(entrada));
-    //memset(array_entradas, 0, sizeof(array_entradas));
+    memset(array_entradas, 0, sizeof(array_entradas));
     int offset = 0;
+    int i = 0;
     if (cant_entradas_inodo > 0)
     {
-        mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
+
         //printf("primer read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre, entrada.ninodo);
         //mi_read_f(*p_inodo_dir, array_entradas, offset, BLOCKSIZE);
-        while ((num_entrada_inodo < cant_entradas_inodo) && (strcmp(inicial, entrada.nombre)) != 0)
+        while ((num_entrada_inodo < cant_entradas_inodo) && (strcmp(inicial, array_entradas[i].nombre)) != 0)
         {
-            num_entrada_inodo++;
-            offset += sizeof(entrada);
-            memset(&entrada, 0, sizeof(entrada));
-            mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
-            //printf("dentro while--> read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre, entrada.ninodo);
+            memset(array_entradas, 0, sizeof(array_entradas));
+            mi_read_f(*p_inodo_dir, array_entradas, offset, sizeof(array_entradas));
+            for (i = 0; (num_entrada_inodo < cant_entradas_inodo) && (i < sizeof(array_entradas)) && (strcmp(inicial, array_entradas[i].nombre)) != 0; i++)
+            {
+                num_entrada_inodo++;
+            }
+            offset += BLOCKSIZE;
         }
     }
-    //printf("num_entrada_inodo después del while: %d\n", num_entrada_inodo);
     //Cas entrada no existeix.
-    //printf("antes del switch Inicial: %s \n", inicial);
-    //printf("antes del switch entrada.nombre val: %s \n", entrada.nombre);
-    if ((strcmp(inicial, entrada.nombre) != 0))
+    if ((strcmp(inicial, array_entradas[i].nombre) != 0))
     {
         switch (reservar)
         {
@@ -183,9 +178,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
             }
             else
             {
-                //printf(" Antes del strcpy --> Inicial: %s, entrada.nombre: %s \n", inicial, entrada.nombre);
                 strcpy(entrada.nombre, inicial);
-                //printf(" Despues del strcpy --> Inicial: %s, entrada.nombre: %s \n", inicial, entrada.nombre);
                 //Directori
 
                 if (tipo == 1)
@@ -193,7 +186,6 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     if (strcmp(final, "/") == 0)
                     {
                         inodoReservado = reservar_inodo('d', permisos);
-                        //printf("Reservado inodo %d tipo d con permisos %d para %s \n", inodoReservado, permisos, inicial);
                         if (inodoReservado == ERROR)
                         {
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -210,7 +202,6 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 else
                 {
                     inodoReservado = reservar_inodo('f', permisos);
-                    //printf("Reservado inodo %d tipo f con permisos %d para %s \n", inodoReservado, permisos, inicial);
                     if (inodoReservado == ERROR)
                     {
                         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -218,16 +209,12 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     }
                     entrada.ninodo = inodoReservado;
                 }
-                //printf("entrada.ninodo: %d \n", entrada.ninodo);
-                //printf("entrada.nombre: %s \n", entrada.nombre);
                 if (mi_write_f(*p_inodo_dir, &entrada, inodo_dir.tamEnBytesLog, sizeof(entrada)) == ERROR)
                 {
-                    //printf("Error en la escritura");
                     if (entrada.ninodo != -1)
                     {
                         if (liberar_inodo(entrada.ninodo) == ERROR)
                         {
-                            //printf("Liberamos el inodo \n");
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                         }
                     }
@@ -243,18 +230,13 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         {
             return ERROR_ENTRADA_YA_EXISTENTE;
         }
-        *p_inodo = entrada.ninodo;
-        //printf("*p_inodo: %d \n", *p_inodo);
+        *p_inodo = array_entradas[i].ninodo;
         *p_entrada = num_entrada_inodo;
-        //printf("*p_entrada: %d \n", *p_entrada);
         return EXIT_SUCCESS;
     }
     else
     {
-        //printf("Hay recursividad \n");
-        *p_inodo_dir = entrada.ninodo;
-        //printf("*p_inodo_dir: %d \n", *p_inodo_dir);
-        //printf("final : %s \n", final);
+        *p_inodo_dir = array_entradas[i].ninodo;
 
         return buscar_entrada(final, p_inodo_dir, p_inodo, p_entrada, reservar, permisos);
     }
@@ -472,7 +454,7 @@ int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nby
     if (strcmp(UltimaEntrada[1].camino, camino) == 0)
     {
         sprintf(string, "[mi_read() --> Utilizamos la caché de lectura en vez de llamar a buscar_entrada()]\n");
-        write(2,string, strlen(string));
+        write(2, string, strlen(string));
         //Obtenim l'inode al qual escriure.
         p_inodo = UltimaEntrada[1].p_inodo;
     }
@@ -491,8 +473,8 @@ int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nby
             mostrar_error_buscar_entrada(error);
             return ERROR;
         }
-        sprintf(string," [mi_read() --> Actualizamos la caché de lectura]\n");
-        write(2,string, strlen(string));
+        sprintf(string, " [mi_read() --> Actualizamos la caché de lectura]\n");
+        write(2, string, strlen(string));
         //Actualitzame els valor de la "cache".
         strcpy(UltimaEntrada[1].camino, camino);
         UltimaEntrada[1].p_inodo = p_inodo;
@@ -505,8 +487,8 @@ int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nby
     //Control d'errors,
     if (bytes == ERROR)
     {
-        sprintf(string,"ERROR_LECTURA: La funcion mi_read ha devuelto un ERROR.\n");
-        write(2,string,strlen(string));
+        sprintf(string, "ERROR_LECTURA: La funcion mi_read ha devuelto un ERROR.\n");
+        write(2, string, strlen(string));
         return ERROR;
     }
     //Retorn el nombre de bytes llegits.
