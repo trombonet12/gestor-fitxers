@@ -4,7 +4,7 @@
 int main(int argc, char **argv)
 {
     //Comprovam la sintaxis
-    if (argc == 3)
+    if (argc >= 3)
     {
         //Establim enllaç amb el dispositiu virtual.
         if (bmount(argv[1]) == ERROR)
@@ -13,8 +13,16 @@ int main(int argc, char **argv)
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         }
         char buffer[TAMBUFFER];
-        mi_dir(argv[2],buffer);
-        printf("%s",buffer);
+        if (argc == 3)
+        {
+            mi_dir(argv[2], buffer, 1);
+        }
+        else
+        {
+            mi_dir(argv[2], buffer, atoi(argv[3]));
+        }
+
+        printf("%s", buffer);
         printf("\n");
         if (bumount() < 0)
         {
@@ -24,6 +32,6 @@ int main(int argc, char **argv)
     }
     else
     {
-        printf("ERROR DE SINTAXIS: Sintaxis correcta: mi_ls <disco> </ruta_directorio>\n");
+        printf("ERROR DE SINTAXIS: Sintaxis correcta: mi_ls <disco> </ruta_directorio> <tipo(0 = Version reducida)>\n");
     }
 }
