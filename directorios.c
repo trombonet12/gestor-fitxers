@@ -314,7 +314,7 @@ int mi_stat(const char *camino, struct STAT *p_stat)
     return EXIT_SUCCESS;
 }
 
-int mi_dir(const char *camino, char *buffer)
+int mi_dir(const char *camino, char *buffer, int tipo)
 {
     //Declaram les variables necessaries.
     unsigned int p_inodo_dir = 0;
@@ -349,24 +349,95 @@ int mi_dir(const char *camino, char *buffer)
     }
     else
     {
-        //Calculam quants d'elements tendra la llista.
-        cant_entradas_inodo = inodo.tamEnBytesLog / sizeof(entrada);
-        //Preparam les variables que ens ajudaran a costruir el buffer.
-        int offset = 0;
-        char aux[50];
-        struct tm *tm;
-
-        //Guardam al buffer el titol del ls.
-        sprintf(aux, "Total: %d\n", cant_entradas_inodo);
-        strcat(buffer, aux);
-        strcat(buffer, "Nombre \tTipo \tModo \tmTime \t\t\tTamaño\n----------------------------------------------------------------\n");
-        //Bucle que llegira totes les entrades del inode pare.
-        for (int i = 0; i < cant_entradas_inodo; i++)
+        if (camino[strlen(camino) - 1] == '/')
         {
+            //Calculam quants d'elements tendra la llista.
+            cant_entradas_inodo = inodo.tamEnBytesLog / sizeof(entrada);
+            //Preparam les variables que ens ajudaran a costruir el buffer.
+            int offset = 0;
+            char aux[50];
+            struct tm *tm;
+
+            if (tipo == 0)
+            {
+                for (int i = 0; i < cant_entradas_inodo; i++)
+                {
+                    //Llegim una entrada del directori.
+                    memset(&entrada, 0, sizeof(entrada));
+                    mi_read_f(p_inodo, &entrada, offset, sizeof(entrada));
+                    offset += sizeof(entrada);
+                    //Obtenim les dades del inode associat.
+                    if (leer_inodo(entrada.ninodo, &inodo) == ERROR)
+                    {
+                        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                        return EXIT_FAILURE;
+                    }
+                    //Ficam al buffer les dades obtingudes.
+                    strcat(buffer, entrada.nombre);
+                    strcat(buffer, " ");
+                }
+            }
+            else
+            {
+                //Guardam al buffer el titol del ls.
+                sprintf(aux, "Total: %d\n", cant_entradas_inodo);
+                strcat(buffer, aux);
+                strcat(buffer, "Nombre \tTipo \tModo \tmTime \t\t\tTamaño\n----------------------------------------------------------------\n");
+                //Bucle que llegira totes les entrades del inode pare.
+                for (int i = 0; i < cant_entradas_inodo; i++)
+                {
+                    //Llegim una entrada del directori.
+                    memset(&entrada, 0, sizeof(entrada));
+                    mi_read_f(p_inodo, &entrada, offset, sizeof(entrada));
+                    offset += sizeof(entrada);
+                    //Obtenim les dades del inode associat.
+                    if (leer_inodo(entrada.ninodo, &inodo) == ERROR)
+                    {
+                        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                        return EXIT_FAILURE;
+                    }
+                    //Ficam al buffer les dades obtingudes.
+                    strcat(buffer, entrada.nombre);
+                    strcat(buffer, "\t");
+                    sprintf(aux, "%c\t", inodo.tipo);
+                    strcat(buffer, aux);
+                    if (inodo.permisos & 4)
+                        strcat(buffer, "r");
+                    else
+                        strcat(buffer, "-");
+                    if (inodo.permisos & 2)
+                        strcat(buffer, "w");
+                    else
+                        strcat(buffer, "-");
+                    if (inodo.permisos & 1)
+                        strcat(buffer, "x");
+                    else
+                        strcat(buffer, "-");
+                    strcat(buffer, "\t");
+
+                    tm = localtime(&inodo.mtime);
+                    sprintf(aux, "%d-%02d-%02d %02d:%02d:%02d\t", tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+                    strcat(buffer, aux);
+                    sprintf(aux, "%d\n", inodo.tamEnBytesLog);
+                    strcat(buffer, aux);
+                }
+            }
+        }
+        else
+        {
+            //Preparam les variables que ens ajudaran a costruir el buffer.
+            int offset = p_entrada * sizeof(entrada);
+            char aux[50];
+            struct tm *tm;
+
+            //Guardam al buffer el titol del ls.
+            strcat(buffer, "Nombre \tTipo \tModo \tmTime \t\t\tTamaño\n----------------------------------------------------------------\n");
+            //Bucle que llegira totes les entrades del inode pare.
+
             //Llegim una entrada del directori.
             memset(&entrada, 0, sizeof(entrada));
-            mi_read_f(p_inodo, &entrada, offset, sizeof(entrada));
-            offset += sizeof(entrada);
+            mi_read_f(p_inodo_dir, &entrada, offset, sizeof(entrada));
+
             //Obtenim les dades del inode associat.
             if (leer_inodo(entrada.ninodo, &inodo) == ERROR)
             {
@@ -398,8 +469,8 @@ int mi_dir(const char *camino, char *buffer)
             sprintf(aux, "%d\n", inodo.tamEnBytesLog);
             strcat(buffer, aux);
         }
+        return EXIT_SUCCESS;
     }
-    return EXIT_SUCCESS;
 }
 int mi_write(const char *camino, const void *buf, unsigned int offset, unsigned int nbytes)
 {
