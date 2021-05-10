@@ -34,18 +34,18 @@ int main(int argc, char **argv)
     fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
   }
 
-  printf("El primer bloque de MB és: %d \n", SB.posPrimerBloqueMB);                        //Print clarificatiu
-  printf("El darrer bloc del MB és: %d \n", SB.posUltimoBloqueMB);                         //Print clarificatiu
-  printf("El primer bloc de l'array inodos és: %d \n", SB.posPrimerBloqueAI);              //Print clarificatiu
-  printf("El darrer bloc de l'array inodos és: %d \n", SB.posUltimoBloqueAI);              //Print clarificatiu
-  printf("El primer bloc de Datos és: %d \n", SB.posPrimerBloqueDatos);                    //Print clarificatiu
-  printf("El darrer bloc de Datoes és: %d \n", SB.posUltimoBloqueDatos);                   //Print clarificatiu
-  printf("La posició del inode arrel en l'array inodes és: %d \n", SB.posInodoRaiz);       //Print clarificatiu
-  printf("El primer inode lliure dins l'arrar inodes és: %d \n", SB.posPrimerInodoLibre);  //Print clarificatiu
-  printf("Quantitat de blocs lliures : %d \n", SB.cantBloquesLibres);                      //Print clarificatiu
-  printf("Quantitat de inodes lliures al array de inodes és: %d \n", SB.cantInodosLibres); //Print clarificatiu
-  printf("Quantitat de blocs totals és: %d \n", SB.totBloques);                            //Print clarificatiu
-  printf("Quantitat de inodes és: %d \n\n", SB.totInodos);                                 //Print clarificatiu
+  printf("posPrimerBloqueMB: %d \n", SB.posPrimerBloqueMB);       //Print clarificatiu
+  printf("posUltimoBloqueMB: %d \n", SB.posUltimoBloqueMB);       //Print clarificatiu
+  printf("posPrimerBloqueAI: %d \n", SB.posPrimerBloqueAI);       //Print clarificatiu
+  printf("posUltimoBloqueAI: %d \n", SB.posUltimoBloqueAI);       //Print clarificatiu
+  printf("posPrimerBloqueDatos: %d \n", SB.posPrimerBloqueDatos); //Print clarificatiu
+  printf("posUltimoBloqueDatos: %d \n", SB.posUltimoBloqueDatos); //Print clarificatiu
+  printf("posInodoRaiz: %d \n", SB.posInodoRaiz);                 //Print clarificatiu
+  printf("posPrimerInodoLibre: %d \n", SB.posPrimerInodoLibre);   //Print clarificatiu
+  printf("cantBloquesLibres : %d \n", SB.cantBloquesLibres);      //Print clarificatiu
+  printf("cantInodosLibres: %d \n", SB.cantInodosLibres);         //Print clarificatiu
+  printf("totBloques: %d \n", SB.totBloques);                     //Print clarificatiu
+  printf("totInodos: %d \n\n", SB.totInodos);                     //Print clarificatiu
 
   /* 
   mostrar_buscar_entrada("pruebas/", 1); //ERROR_CAMINO_INCORRECTO
