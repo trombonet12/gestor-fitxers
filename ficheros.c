@@ -284,10 +284,10 @@ void imprimir_stat(struct STAT *p_stat)
     printf("-------------------------------------------\n");
     printf("Tipo: %c\n", p_stat->tipo);
     printf("Permisos: %c\n", p_stat->permisos);
-    printf("Fecha de acceso: %sFecha de modificacion: %sFecha de creacion: %s", atime, mtime, ctime);
-    printf("Enlaces: %d\n", p_stat->nlinks);
-    printf("Tamaño: %d\n", p_stat->tamEnBytesLog);
-    printf("Bloques: %d\n", p_stat->numBloquesOcupados);
+    printf("atime: %s ctime: %s mtime: %s", atime, ctime, mtime);
+    printf("nlinks: %d\n", p_stat->nlinks);
+    printf("tamEnBytesLog: %d\n", p_stat->tamEnBytesLog);
+    printf("numBloquesOcupados: %d\n", p_stat->numBloquesOcupados);
     printf("-------------------------------------------\n");
 }
 
