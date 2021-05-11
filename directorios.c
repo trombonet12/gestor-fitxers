@@ -574,11 +574,11 @@ int mi_link(const char *camino1, const char *camino2)
 {
     //Declaram les variables necessaries.
     unsigned int p_inodo_dir1 = 0;
-    unsigned int p_inodo1;
-    unsigned int p_entrada1;
+    unsigned int p_inodo1 = 0;
+    unsigned int p_entrada1 = 0;
     unsigned int p_inodo_dir2 = 0;
-    unsigned int p_inodo2;
-    unsigned int p_entrada2;
+    unsigned int p_inodo2 = 0;
+    unsigned int p_entrada2 = 0;
     int error;
     struct inodo inodo;
     struct entrada entrada;
@@ -610,7 +610,7 @@ int mi_link(const char *camino1, const char *camino2)
     }
 
     //Comprovam que la ruta_enlace (camino2) no existeixi.
-    if ((error = buscar_entrada(camino2, &p_inodo_dir2, &p_inodo2, &p_entrada2, 1, '6')) < 0)
+    if ((error = buscar_entrada(camino2, &p_inodo_dir2, &p_inodo2, &p_entrada2, 1, 6)) < 0)
     {
         //En cas d'error avisam al usuari.
         //Ha de botar s'error de ERROR_ENTRADA_YA_EXISTENTE
@@ -618,7 +618,7 @@ int mi_link(const char *camino1, const char *camino2)
         return ERROR;
     }
     //Llegim l'entrada creada corresponent a camino2.
-    if (mi_read_f(p_inodo_dir2, &entrada, ((p_entrada2 * sizeof(entrada)), sizeof(entrada)) == ERROR)
+    if (mi_read_f(p_inodo_dir2, &entrada, (p_entrada2 * sizeof(entrada)), sizeof(entrada)) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         return ERROR;
@@ -630,18 +630,21 @@ int mi_link(const char *camino1, const char *camino2)
     printf("entrada.ninodo: %d\n",entrada.ninodo);
     int nbytes;
     //Escriptura de l'entrada mmodificada.
-    if ((nbytes = mi_write_f(p_inodo_dir2, &entrada, ((p_entrada2 * sizeof(entrada)), sizeof(entrada))) == ERROR)
+    if ((nbytes = mi_write_f(p_inodo_dir2, &entrada, (p_entrada2 * sizeof(entrada)), sizeof(entrada))) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         return ERROR;
     }
     printf("nbytes %d \n",nbytes);
     //Lliberam l'inode associat a p_inodo2.
+
+/*
     if (liberar_inodo(p_inodo2) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         return ERROR;
     }
+*/
     //Actualitzam les dades de p_inode1
     inodo.nlinks++;
     inodo.ctime = time(NULL);
