@@ -779,7 +779,6 @@ int traducir_bloque_inodo(unsigned int ninodo, unsigned int nblogico, char reser
 //Allibera tot el contigut del inode passat per parametre
 int liberar_inodo(unsigned int ninodo)
 {
-
     int bloquesLiberados = 0;
     struct inodo inodo;
     struct superbloque SB;
@@ -853,7 +852,6 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
     //Comprovam si hi ha contingut
     if (inodo->tamEnBytesLog == 0)
     {
-        fprintf(stderr,"El fichero esta vacio. \n");
         return liberados;
     }
     //Calculam el darrer bloc logic
