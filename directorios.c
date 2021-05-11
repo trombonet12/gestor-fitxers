@@ -92,6 +92,8 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     int cant_entradas_inodo, num_entrada_inodo;
     int inodoReservado = 0;
 
+        //printf("**p_inodo: %d \n", *p_inodo);
+        //printf("**p_entrada: %d \n", *p_entrada);
     //Lectura del SB.
     if (bread(posSB, &SB) == ERROR)
     {
@@ -104,6 +106,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         *p_inodo = SB.posInodoRaiz;
         //És la primera entrada de totes.
         *p_entrada = 0;
+        //printf("Som al directori arrel\n");
         return 0;
     }
 
@@ -122,7 +125,6 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         return EXIT_FAILURE;
     }
 
-    printf("Permisos buscar entrada: %c\n",inodo_dir.permisos);
     //Comprovam que l'inode llegit té permisos de lectura.
     if ((inodo_dir.permisos & 4) != 4)
     {
@@ -131,31 +133,34 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
 
     //Calculam la quantitat de entrades que té l'inode corresponent.
     cant_entradas_inodo = inodo_dir.tamEnBytesLog / sizeof(entrada);
+    //printf("Calculo cant_entradas_inodo de inodo_dir: %d\n", cant_entradas_inodo);
     //Número de entrada inicial.
     num_entrada_inodo = 0;
-    struct entrada array_entradas[BLOCKSIZE / sizeof(entrada)];
+    //printf("num_entrada_inodo antes del while: %d\n", num_entrada_inodo);
+    //struct entrada array_entradas[BLOCKSIZE / sizeof(entrada)];
 
-    memset(array_entradas, 0, sizeof(array_entradas));
+    memset(&entrada, 0, sizeof(entrada));
+    //memset(array_entradas, 0, sizeof(array_entradas));
     int offset = 0;
-    int i = 0;
     if (cant_entradas_inodo > 0)
     {
-
-        //printf("primer read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre, entrada.ninodo);
+        mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
+        //printf("primer read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre,entrada.ninodo);
         //mi_read_f(*p_inodo_dir, array_entradas, offset, BLOCKSIZE);
-        while ((num_entrada_inodo < cant_entradas_inodo) && (strcmp(inicial, array_entradas[i].nombre)) != 0)
+        while ((num_entrada_inodo < cant_entradas_inodo) && (strcmp(inicial, entrada.nombre)) != 0)
         {
-            memset(array_entradas, 0, sizeof(array_entradas));
-            mi_read_f(*p_inodo_dir, array_entradas, offset, sizeof(array_entradas));
-            for (i = 0; (num_entrada_inodo < cant_entradas_inodo) && (i < sizeof(array_entradas)) && (strcmp(inicial, array_entradas[i].nombre)) != 0; i++)
-            {
-                num_entrada_inodo++;
-            }
-            offset += BLOCKSIZE;
+            num_entrada_inodo++;
+            offset+=sizeof(entrada);
+            memset(&entrada, 0, sizeof(entrada));
+            mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
+            //printf("dentro while--> read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre,entrada.ninodo);
         }
     }
+    //printf("num_entrada_inodo después del while: %d\n", num_entrada_inodo);
     //Cas entrada no existeix.
-    if ((strcmp(inicial, array_entradas[i].nombre) != 0))
+    //printf("antes del switch Inicial: %s \n", inicial);
+    //printf("antes del switch entrada.nombre val: %s \n", entrada.nombre);
+    if ((strcmp(inicial, entrada.nombre) != 0))
     {
         switch (reservar)
         {
@@ -178,14 +183,17 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
             }
             else
             {
+                //printf(" Antes del strcpy --> Inicial: %s, entrada.nombre: %s \n", inicial, entrada.nombre);
                 strcpy(entrada.nombre, inicial);
+                //printf(" Despues del strcpy --> Inicial: %s, entrada.nombre: %s \n", inicial, entrada.nombre);
                 //Directori
-
+                
                 if (tipo == 1)
                 {
                     if (strcmp(final, "/") == 0)
                     {
                         inodoReservado = reservar_inodo('d', permisos);
+                        //printf("Reservado inodo %d tipo d con permisos %d para %s \n", inodoReservado,permisos,inicial);
                         if (inodoReservado == ERROR)
                         {
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -202,6 +210,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 else
                 {
                     inodoReservado = reservar_inodo('f', permisos);
+                    //printf("Reservado inodo %d tipo f con permisos %d para %s \n", inodoReservado,permisos,inicial);
                     if (inodoReservado == ERROR)
                     {
                         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -209,12 +218,16 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     }
                     entrada.ninodo = inodoReservado;
                 }
+                //printf("entrada.ninodo: %d \n", entrada.ninodo);
+                //printf("entrada.nombre: %s \n", entrada.nombre);
                 if (mi_write_f(*p_inodo_dir, &entrada, inodo_dir.tamEnBytesLog, sizeof(entrada)) == ERROR)
                 {
+                    //printf("Error en la escritura");
                     if (entrada.ninodo != -1)
                     {
                         if (liberar_inodo(entrada.ninodo) == ERROR)
                         {
+                            //printf("Liberamos el inodo \n");
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                         }
                     }
@@ -223,22 +236,24 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
             }
         }
     }
-    if ((strcmp(final, "/") == 0) || (strcmp(final, "") == 0))
-    {
+    if ((strcmp(final, "/") == 0)||(strcmp(final,"") == 0)){
         //printf("Cortamos la recursividad \n");
-        if ((num_entrada_inodo < cant_entradas_inodo) && (reservar == 1))
-        {
+        if((num_entrada_inodo < cant_entradas_inodo) && (reservar == 1)){
             return ERROR_ENTRADA_YA_EXISTENTE;
         }
-        *p_inodo = array_entradas[i].ninodo;
+        *p_inodo = entrada.ninodo;
+        //printf("*p_inodo: %d \n", *p_inodo);
         *p_entrada = num_entrada_inodo;
+        //printf("*p_entrada: %d \n", *p_entrada);
         return EXIT_SUCCESS;
-    }
-    else
-    {
-        *p_inodo_dir = array_entradas[i].ninodo;
 
-        return buscar_entrada(final, p_inodo_dir, p_inodo, p_entrada, reservar, permisos);
+    }else{
+        //printf("Hay recursividad \n");
+        *p_inodo_dir = entrada.ninodo;
+        //printf("*p_inodo_dir: %d \n", *p_inodo_dir);
+        //printf("final : %s \n", final);
+
+        return buscar_entrada(final,p_inodo_dir,p_inodo, p_entrada, reservar, permisos);
     }
     return EXIT_SUCCESS;
 }
@@ -599,7 +614,6 @@ int mi_link(const char *camino1, const char *camino2)
     //Comprovam que l'inode llegit té permisos de lectura.
     if ((inodo.permisos & 4) != 4)
     {
-        printf("inodo.permisos --> %d \n", inodo.permisos);
         return ERROR;
     }
     //Comprovam que ambdues rutes son fitxers. En cas contrari, retornam ERROR.
@@ -624,10 +638,7 @@ int mi_link(const char *camino1, const char *camino2)
         return ERROR;
     }
     //Cream l'enllaç.
-    printf("entrada.nombre: %s\n",entrada.nombre);
-    printf("entrada.ninodo: %d\n",entrada.ninodo);
     entrada.ninodo = p_inodo1;
-    printf("entrada.ninodo: %d\n",entrada.ninodo);
     int nbytes;
     //Escriptura de l'entrada mmodificada.
     if ((nbytes = mi_write_f(p_inodo_dir2, &entrada, (p_entrada2 * sizeof(entrada)), sizeof(entrada))) == ERROR)
@@ -635,16 +646,15 @@ int mi_link(const char *camino1, const char *camino2)
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         return ERROR;
     }
-    printf("nbytes %d \n",nbytes);
     //Lliberam l'inode associat a p_inodo2.
 
-/*
+
     if (liberar_inodo(p_inodo2) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
         return ERROR;
     }
-*/
+
     //Actualitzam les dades de p_inode1
     inodo.nlinks++;
     inodo.ctime = time(NULL);
