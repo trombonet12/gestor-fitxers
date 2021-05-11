@@ -104,7 +104,6 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         *p_inodo = SB.posInodoRaiz;
         //És la primera entrada de totes.
         *p_entrada = 0;
-        //printf("Som al directori arrel\n");
         return 0;
     }
 
@@ -123,6 +122,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         return EXIT_FAILURE;
     }
 
+    printf("Permisos buscar entrada: %c\n",inodo_dir.permisos);
     //Comprovam que l'inode llegit té permisos de lectura.
     if ((inodo_dir.permisos & 4) != 4)
     {
@@ -472,6 +472,8 @@ int mi_dir(const char *camino, char *buffer, int tipo)
         return EXIT_SUCCESS;
     }
 }
+
+//Mètode que ens permet escriure contingut a un fitxer a un offset determinat.
 int mi_write(const char *camino, const void *buf, unsigned int offset, unsigned int nbytes)
 {
     unsigned int p_inodo = 0;
@@ -517,6 +519,7 @@ int mi_write(const char *camino, const void *buf, unsigned int offset, unsigned 
     return bytes;
 }
 
+//Mètode que ens permet llegir tot el contingut d'un fitxer.
 int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nbytes)
 {
     unsigned int p_inodo = 0;
@@ -564,4 +567,88 @@ int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nby
     }
     //Retorn el nombre de bytes llegits.
     return bytes;
+}
+
+//Mètode que crea un enllaç entre dues rutes passades per paràmetre.
+int mi_link(const char *camino1, const char *camino2)
+{
+    //Declaram les variables necessaries.
+    unsigned int p_inodo_dir1 = 0;
+    unsigned int p_inodo1 = 0;
+    unsigned int p_entrada1 = 0;
+    unsigned int p_inodo_dir2 = 0;
+    unsigned int p_inodo2 = 0;
+    unsigned int p_entrada2 = 0;
+    int error;
+    struct inodo inodo;
+    struct entrada entrada;
+    memset(&entrada, 0, sizeof(entrada));
+    //Obtenim el numero del inode corresponent a la ruta original (camino1).
+    if ((error = buscar_entrada(camino1, &p_inodo_dir1, &p_inodo1, &p_entrada1, 0, 0)) < 0)
+    {
+        //En cas d'error avisam al usuari.
+        mostrar_error_buscar_entrada(error);
+        return ERROR;
+    }
+    //Lectura del inode corresponent a p_inodo1.
+    if (leer_inodo(p_inodo1, &inodo) == ERROR)
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
+    }
+    //Comprovam que l'inode llegit té permisos de lectura.
+    if ((inodo.permisos & 4) != 4)
+    {
+        printf("inodo.permisos --> %d \n", inodo.permisos);
+        return ERROR;
+    }
+    //Comprovam que ambdues rutes son fitxers. En cas contrari, retornam ERROR.
+    if ((camino1[strlen(camino1) - 1] == '/') && (camino2[strlen(camino2) - 1] == '/'))
+    {
+        printf("Ambas rutas deben referirse a un fichero.\n");
+        return ERROR;
+    }
+
+    //Comprovam que la ruta_enlace (camino2) no existeixi.
+    if ((error = buscar_entrada(camino2, &p_inodo_dir2, &p_inodo2, &p_entrada2, 1, '6')) < 0)
+    {
+        //En cas d'error avisam al usuari.
+        //Ha de botar s'error de ERROR_ENTRADA_YA_EXISTENTE
+        mostrar_error_buscar_entrada(error);
+        return ERROR;
+    }
+    //Llegim l'entrada creada corresponent a camino2.
+    if (mi_read_f(p_inodo_dir2, &entrada, (p_entrada2 * sizeof(entrada)), sizeof(entrada)) == ERROR)
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
+    }
+    //Cream l'enllaç.
+    printf("entrada.nombre: %s\n",entrada.nombre);
+    printf("entrada.ninodo: %d\n",entrada.ninodo);
+    entrada.ninodo = p_inodo1;
+    printf("entrada.ninodo: %d\n",entrada.ninodo);
+    //Escriptura de l'entrada mmodificada.
+    if (mi_write_f(p_inodo_dir2, &entrada, (p_entrada2 * sizeof(entrada)), sizeof(entrada)) == ERROR)
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
+    }
+    //Lliberam l'inode associat a p_inodo2.
+    if (liberar_inodo(p_inodo2) == ERROR)
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
+    }
+    //Actualitzam les dades de p_inode1
+    inodo.nlinks++;
+    inodo.ctime = time(NULL);
+    //Escriptura de l'inode actualitzat.
+    if (escribir_inodo(p_inodo1, inodo) == ERROR)
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
+    }
+    //Retorn exit.
+    return EXIT_SUCCESS;
 }
