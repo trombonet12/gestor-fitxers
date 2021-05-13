@@ -92,8 +92,8 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     int cant_entradas_inodo, num_entrada_inodo;
     int inodoReservado = 0;
 
-        //printf("**p_inodo: %d \n", *p_inodo);
-        //printf("**p_entrada: %d \n", *p_entrada);
+    //printf("**p_inodo: %d \n", *p_inodo);
+    //printf("**p_entrada: %d \n", *p_entrada);
     //Lectura del SB.
     if (bread(posSB, &SB) == ERROR)
     {
@@ -150,7 +150,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         while ((num_entrada_inodo < cant_entradas_inodo) && (strcmp(inicial, entrada.nombre)) != 0)
         {
             num_entrada_inodo++;
-            offset+=sizeof(entrada);
+            offset += sizeof(entrada);
             memset(&entrada, 0, sizeof(entrada));
             mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
             //printf("dentro while--> read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre,entrada.ninodo);
@@ -187,7 +187,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                 strcpy(entrada.nombre, inicial);
                 //printf(" Despues del strcpy --> Inicial: %s, entrada.nombre: %s \n", inicial, entrada.nombre);
                 //Directori
-                
+
                 if (tipo == 1)
                 {
                     if (strcmp(final, "/") == 0)
@@ -236,9 +236,11 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
             }
         }
     }
-    if ((strcmp(final, "/") == 0)||(strcmp(final,"") == 0)){
+    if ((strcmp(final, "/") == 0) || (strcmp(final, "") == 0))
+    {
         //printf("Cortamos la recursividad \n");
-        if((num_entrada_inodo < cant_entradas_inodo) && (reservar == 1)){
+        if ((num_entrada_inodo < cant_entradas_inodo) && (reservar == 1))
+        {
             return ERROR_ENTRADA_YA_EXISTENTE;
         }
         *p_inodo = entrada.ninodo;
@@ -246,14 +248,15 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         *p_entrada = num_entrada_inodo;
         //printf("*p_entrada: %d \n", *p_entrada);
         return EXIT_SUCCESS;
-
-    }else{
+    }
+    else
+    {
         //printf("Hay recursividad \n");
         *p_inodo_dir = entrada.ninodo;
         //printf("*p_inodo_dir: %d \n", *p_inodo_dir);
         //printf("final : %s \n", final);
 
-        return buscar_entrada(final,p_inodo_dir,p_inodo, p_entrada, reservar, permisos);
+        return buscar_entrada(final, p_inodo_dir, p_inodo, p_entrada, reservar, permisos);
     }
     return EXIT_SUCCESS;
 }
@@ -325,6 +328,7 @@ int mi_stat(const char *camino, struct STAT *p_stat)
         return ERROR;
     }
     //Imprimim les dades obtingudes.
+    printf("Nº de inodo: %d \n", p_inodo);
     imprimir_stat(p_stat);
     return EXIT_SUCCESS;
 }
@@ -648,7 +652,6 @@ int mi_link(const char *camino1, const char *camino2)
     }
     //Lliberam l'inode associat a p_inodo2.
 
-
     if (liberar_inodo(p_inodo2) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -665,5 +668,99 @@ int mi_link(const char *camino1, const char *camino2)
         return ERROR;
     }
     //Retorn exit.
+    return EXIT_SUCCESS;
+}
+
+int mi_unlink(const char *camino)
+{
+    //Declaracions variables.
+    unsigned int p_inodo_dir = 0;
+    unsigned int p_inodo = 0;
+    unsigned int p_entrada = 0;
+    int error;
+    struct inodo inodo, inodo_dir;
+    struct entrada entrada;
+
+    //Comprovam que l'entrada camino existeixi.
+    if ((error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 0) < 0))
+    {
+        mostrar_error_buscar_entrada(error);
+        return ERROR;
+    }
+    //Comprovació de si el camí passat per paràmetre és un directori.
+    if (camino[strlen(camino) - 1] == '/')
+    { //Llegim l'inode associat al cami.
+        if ((leer_inodo(p_inodo, &inodo)) == ERROR)
+        {
+            return ERROR;
+        }
+        //Comprovació de si el directori està buit. Si  no es així, no podem borrar el directori.
+        if (inodo.tamEnBytesLog > 0)
+        {
+            printf("El directorio no está vació, no se puede borrar \n");
+            return ERROR;
+        }
+    }
+    printf("p_inodo_dir: %d \n", p_inodo_dir);
+    //Llegim l'inode associat al directori que conté l'entrada a eliminar.
+    if ((leer_inodo(p_inodo_dir, &inodo_dir)) == ERROR)
+    {
+        return ERROR;
+    }
+    //Calculam el nombre d'entrades que té l'inode arrel.
+    int numeroEntradas = (inodo_dir.tamEnBytesLog / sizeof(entrada));
+    printf("Numeor de entradas es: %d", numeroEntradas);
+    //Cas entrada a eliminar és la darrera.
+    if (p_entrada == (numeroEntradas - 1))
+    {   
+        printf("L'entrada e eliminar és la darrera. \n");
+        printf("tamBytesLogicos de Inodo_Dir: %d \n", inodo_dir.tamEnBytesLog);
+        printf("bytes maxima a truncar: %ld \n", inodo_dir.tamEnBytesLog - sizeof(entrada));
+        //truncam l'inode (eliminar la darrera entrada).
+        if (mi_truncar_f(p_inodo_dir, inodo_dir.tamEnBytesLog - sizeof(entrada)) == ERROR)
+        {
+            return ERROR;
+        }
+    }
+    else
+    {
+        //Inicialitzam a 0 el buffer de lectura.
+        memset(&entrada, 0, sizeof(entrada));
+        //Llegim la darrera entrada (Substituirà a l'entrada a eliminar).
+        if ((mi_read_f(p_inodo_dir, &entrada, (numeroEntradas -1) * sizeof(entrada), sizeof(entrada))) == ERROR)
+        {
+            return ERROR;
+        }
+        //Sobrescrivim l'entrada (La darrera entrada ara es troba sobrescrita sobre l'entrada a eliminar).
+        if ((mi_write_f(p_inodo_dir, &entrada, p_entrada * sizeof(entrada), sizeof(entrada))) == ERROR)
+        {
+            return ERROR;
+        }
+        printf("tamBytesLogicos de Inodo_Dir: %d \n", inodo_dir.tamEnBytesLog);
+        printf("bytes maxima a truncar: %ld \n", inodo_dir.tamEnBytesLog - sizeof(entrada));
+        //Eliminam la darrera entrada.
+        if (mi_truncar_f(p_inodo_dir, inodo_dir.tamEnBytesLog - sizeof(entrada)) == ERROR)
+        {
+            return ERROR;
+        }
+        //Llegim l'inode associat a l'entrada eliminada.
+        if ((leer_inodo(p_inodo, &inodo)) == ERROR)
+        {
+            return ERROR;
+        }
+        //Actualitzam les dades de l'inode.
+        inodo.nlinks--;
+        //Alliberam o escrivim l'inode segons el nombre de links. 
+        if (inodo.nlinks == 0)
+        {
+            liberar_inodo(p_inodo);
+        }
+        else
+        {
+            inodo.ctime = time(NULL);
+            escribir_inodo(p_inodo, inodo);
+        }
+    }
+
     return EXIT_SUCCESS;
 }
