@@ -401,44 +401,47 @@ int mi_dir(const char *camino, char *buffer, int tipo)
                 //Guardam al buffer el titol del ls.
                 sprintf(aux, "Total: %d\n", cant_entradas_inodo);
                 strcat(buffer, aux);
-                strcat(buffer, "Nombre \tTipo \tModo \tmTime \t\t\tTamaño\n----------------------------------------------------------------\n");
-                //Bucle que llegira totes les entrades del inode pare.
-                for (int i = 0; i < cant_entradas_inodo; i++)
+                if (cant_entradas_inodo > 0)
                 {
-                    //Llegim una entrada del directori.
-                    memset(&entrada, 0, sizeof(entrada));
-                    mi_read_f(p_inodo, &entrada, offset, sizeof(entrada));
-                    offset += sizeof(entrada);
-                    //Obtenim les dades del inode associat.
-                    if (leer_inodo(entrada.ninodo, &inodo) == ERROR)
+                    strcat(buffer, "Nombre \tTipo \tModo \tmTime \t\t\tTamaño\n----------------------------------------------------------------\n");
+                    //Bucle que llegira totes les entrades del inode pare.
+                    for (int i = 0; i < cant_entradas_inodo; i++)
                     {
-                        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-                        return EXIT_FAILURE;
-                    }
-                    //Ficam al buffer les dades obtingudes.
-                    strcat(buffer, entrada.nombre);
-                    strcat(buffer, "\t");
-                    sprintf(aux, "%c\t", inodo.tipo);
-                    strcat(buffer, aux);
-                    if (inodo.permisos & 4)
-                        strcat(buffer, "r");
-                    else
-                        strcat(buffer, "-");
-                    if (inodo.permisos & 2)
-                        strcat(buffer, "w");
-                    else
-                        strcat(buffer, "-");
-                    if (inodo.permisos & 1)
-                        strcat(buffer, "x");
-                    else
-                        strcat(buffer, "-");
-                    strcat(buffer, "\t");
+                        //Llegim una entrada del directori.
+                        memset(&entrada, 0, sizeof(entrada));
+                        mi_read_f(p_inodo, &entrada, offset, sizeof(entrada));
+                        offset += sizeof(entrada);
+                        //Obtenim les dades del inode associat.
+                        if (leer_inodo(entrada.ninodo, &inodo) == ERROR)
+                        {
+                            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+                            return EXIT_FAILURE;
+                        }
+                        //Ficam al buffer les dades obtingudes.
+                        strcat(buffer, entrada.nombre);
+                        strcat(buffer, "\t");
+                        sprintf(aux, "%c\t", inodo.tipo);
+                        strcat(buffer, aux);
+                        if (inodo.permisos & 4)
+                            strcat(buffer, "r");
+                        else
+                            strcat(buffer, "-");
+                        if (inodo.permisos & 2)
+                            strcat(buffer, "w");
+                        else
+                            strcat(buffer, "-");
+                        if (inodo.permisos & 1)
+                            strcat(buffer, "x");
+                        else
+                            strcat(buffer, "-");
+                        strcat(buffer, "\t");
 
-                    tm = localtime(&inodo.mtime);
-                    sprintf(aux, "%d-%02d-%02d %02d:%02d:%02d\t", tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
-                    strcat(buffer, aux);
-                    sprintf(aux, "%d\n", inodo.tamEnBytesLog);
-                    strcat(buffer, aux);
+                        tm = localtime(&inodo.mtime);
+                        sprintf(aux, "%d-%02d-%02d %02d:%02d:%02d\t", tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec);
+                        strcat(buffer, aux);
+                        sprintf(aux, "%d\n", inodo.tamEnBytesLog);
+                        strcat(buffer, aux);
+                    }
                 }
             }
         }
@@ -709,11 +712,11 @@ int mi_unlink(const char *camino)
     }
     //Calculam el nombre d'entrades que té l'inode arrel.
     int numeroEntradas = (inodo_dir.tamEnBytesLog / sizeof(entrada));
-    printf("Numeor de entradas es: %d", numeroEntradas);
+    printf("Numero de entradas es: %d\n", numeroEntradas);
     //Cas entrada a eliminar és la darrera.
     if (p_entrada == (numeroEntradas - 1))
-    {   
-        printf("L'entrada e eliminar és la darrera. \n");
+    {
+        printf("L'entrada a eliminar és la darrera. \n");
         printf("tamBytesLogicos de Inodo_Dir: %d \n", inodo_dir.tamEnBytesLog);
         printf("bytes maxima a truncar: %ld \n", inodo_dir.tamEnBytesLog - sizeof(entrada));
         //truncam l'inode (eliminar la darrera entrada).
@@ -721,13 +724,18 @@ int mi_unlink(const char *camino)
         {
             return ERROR;
         }
+        if (inodo.tamEnBytesLog == 0)
+        {
+            printf("Liberamos el inodo: %d\n", p_inodo);
+            liberar_inodo(p_inodo);
+        }
     }
     else
     {
         //Inicialitzam a 0 el buffer de lectura.
         memset(&entrada, 0, sizeof(entrada));
         //Llegim la darrera entrada (Substituirà a l'entrada a eliminar).
-        if ((mi_read_f(p_inodo_dir, &entrada, (numeroEntradas -1) * sizeof(entrada), sizeof(entrada))) == ERROR)
+        if ((mi_read_f(p_inodo_dir, &entrada, (numeroEntradas - 1) * sizeof(entrada), sizeof(entrada))) == ERROR)
         {
             return ERROR;
         }
@@ -750,13 +758,15 @@ int mi_unlink(const char *camino)
         }
         //Actualitzam les dades de l'inode.
         inodo.nlinks--;
-        //Alliberam o escrivim l'inode segons el nombre de links. 
+        //Alliberam o escrivim l'inode segons el nombre de links.
         if (inodo.nlinks == 0)
         {
+            printf("Liberamos el inodo: %d\n", p_inodo);
             liberar_inodo(p_inodo);
         }
         else
         {
+            printf("NO liberamos el inodo: %d\n", p_inodo);
             inodo.ctime = time(NULL);
             escribir_inodo(p_inodo, inodo);
         }
