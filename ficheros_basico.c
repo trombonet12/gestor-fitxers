@@ -864,7 +864,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
         ultimoBL = inodo->tamEnBytesLog / BLOCKSIZE;
     }
 
-    fprintf(stderr,"liberar_bloques_inodo()→ primer BL: %d, último BL: %d\n", primerBL, ultimoBL);
+    //fprintf(stderr,"liberar_bloques_inodo()→ primer BL: %d, último BL: %d\n", primerBL, ultimoBL);
 
     memset(bufAux_punteros, 0, sizeof(bufAux_punteros));
     ptr = 0;
@@ -914,7 +914,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
             }
             liberados++;
 
-            fprintf(stderr,"liberar_bloques_inodo()→ liberado BF %d de datos para BL %d\n", ptr, nBL);
+            //fprintf(stderr,"liberar_bloques_inodo()→ liberado BF %d de datos para BL %d\n", ptr, nBL);
             //COmprovam si es directe o indirecte
             if (nRangoBL == 0)
             {
@@ -940,7 +940,7 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
                             return ERROR;
                         }
                         liberados++;
-                        fprintf(stderr,"liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d\n", ptr, nivel_punteros, nBL);
+                        //fprintf(stderr,"liberar_bloques_inodo()→ liberado BF %d de punteros_nivel%d correspondiente al BL %d\n", ptr, nivel_punteros, nBL);
 
                         //Aqui es pot afegir una millora per botar-nos els blocs que no fa falta explorar
 
@@ -966,6 +966,6 @@ int liberar_bloques_inodo(unsigned int primerBL, struct inodo *inodo)
             }
         }
     }
-    printf("liberar_bloques_inodo()→ total bloques liberados: %d \n", liberados);
+    //printf("liberar_bloques_inodo()→ total bloques liberados: %d \n", liberados);
     return liberados;
 }
