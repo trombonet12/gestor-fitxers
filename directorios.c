@@ -677,14 +677,15 @@ int mi_unlink(const char *camino)
         mostrar_error_buscar_entrada(error);
         return ERROR;
     }
+    //Llegim l'inode associat al cami.
+    if ((leer_inodo(p_inodo, &inodo)) == ERROR)
+    {
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
+    }
     //Comprovació de si el camí passat per paràmetre és un directori.
     if (camino[strlen(camino) - 1] == '/')
-    { //Llegim l'inode associat al cami.
-        if ((leer_inodo(p_inodo, &inodo)) == ERROR)
-        {
-            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-            return ERROR;
-        }
+    {
         //Comprovació de si el directori està buit. Si  no es així, no podem borrar el directori.
         if (inodo.tamEnBytesLog > 0)
         {
@@ -709,11 +710,8 @@ int mi_unlink(const char *camino)
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
             return ERROR;
         }
-        if (inodo.tamEnBytesLog == 0)
-        {
-            //printf("Liberamos el inodo: %d\n", p_inodo);
-            liberar_inodo(p_inodo);
-        }
+        //Actualitzam les dades de l'inode.
+        inodo.nlinks--;
     }
     else
     {
@@ -737,34 +735,28 @@ int mi_unlink(const char *camino)
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
             return ERROR;
         }
-        //Llegim l'inode associat a l'entrada eliminada.
-        if ((leer_inodo(p_inodo, &inodo)) == ERROR)
+        //Actualitzam les dades de l'inode.
+        inodo.nlinks--;
+    }
+    //Alliberam o escrivim l'inode segons el nombre de links.
+    if (inodo.nlinks == 0)
+    {
+        //printf("Liberamos el inodo: %d\n", p_inodo);
+        if ((liberar_inodo(p_inodo)) == ERROR)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
             return ERROR;
         }
-        //Actualitzam les dades de l'inode.
-        inodo.nlinks--;
-        //Alliberam o escrivim l'inode segons el nombre de links.
-        if (inodo.nlinks == 0)
+    }
+    else
+    {
+        //printf("NO liberamos el inodo: %d\n", p_inodo);
+        inodo.ctime = time(NULL);
+        if ((escribir_inodo(p_inodo, inodo)) == ERROR)
         {
-            //printf("Liberamos el inodo: %d\n", p_inodo);
-            if ((liberar_inodo(p_inodo)) == ERROR)
-            {
-                fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-                return ERROR;
-            }
-        }
-        else
-        {
-            //printf("NO liberamos el inodo: %d\n", p_inodo);
-            inodo.ctime = time(NULL);
-            if ((escribir_inodo(p_inodo, inodo)) == ERROR)
-            {
-                fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
-                return ERROR;
-            };
-        }
+            fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            return ERROR;
+        };
     }
 
     return EXIT_SUCCESS;
