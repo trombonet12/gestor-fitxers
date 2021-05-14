@@ -264,7 +264,7 @@ int mi_stat_f(unsigned int ninodo, struct STAT *p_stat)
 }
 
 //Imprimir informació del struct STAT passat per paràmetre.
-void imprimir_stat(struct STAT *p_stat)
+void imprimir_stat(struct STAT *p_stat, unsigned int ninodo)
 {
     //Variables per poder imprimir el time
     struct tm *ts;
@@ -282,6 +282,7 @@ void imprimir_stat(struct STAT *p_stat)
 
     //Imprimim les dades solicitades
     printf("-------------------------------------------\n");
+    printf("Nº de inodo: %d \n", ninodo);
     printf("Tipo: %c\n", p_stat->tipo);
     printf("Permisos: %c\n", p_stat->permisos);
     printf("atime: %sctime: %smtime: %s", atime, ctime, mtime);
