@@ -1,4 +1,5 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
+//Imprimim les dades d'un inode
 #include "directorios.h"
 
 int main(int argc, char **argv)

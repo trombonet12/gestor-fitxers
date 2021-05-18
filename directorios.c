@@ -79,7 +79,7 @@ void mostrar_error_buscar_entrada(int error)
         break;
     }
 }
-
+//Mètode que cerca una determinada entrada entre les entrades de l'inode corresponent al seu directori pare.
 int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsigned int *p_inodo, unsigned int *p_entrada, char reservar, unsigned char permisos)
 {
     //Declaració de les varibales.
@@ -92,8 +92,6 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     int cant_entradas_inodo, num_entrada_inodo;
     int inodoReservado = 0;
 
-    //printf("**p_inodo: %d \n", *p_inodo);
-    //printf("**p_entrada: %d \n", *p_entrada);
     //Lectura del SB.
     if (bread(posSB, &SB) == ERROR)
     {
@@ -106,13 +104,11 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         *p_inodo = SB.posInodoRaiz;
         //És la primera entrada de totes.
         *p_entrada = 0;
-        //printf("Som al directori arrel\n");
         return 0;
     }
 
     //Dividir el camino_parcial amb inicial i final.
     tipo = extraer_camino(camino_parcial, inicial, final);
-    //printf("Tipo 1--> directorio// Tipo 0--> fichero: %d \n", tipo);
     if (tipo == ERROR)
     {
         return ERROR_CAMINO_INCORRECTO;
@@ -133,14 +129,10 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
 
     //Calculam la quantitat de entrades que té l'inode corresponent.
     cant_entradas_inodo = inodo_dir.tamEnBytesLog / sizeof(entrada);
-    //printf("Calculo cant_entradas_inodo de inodo_dir: %d\n", cant_entradas_inodo);
     //Número de entrada inicial.
     num_entrada_inodo = 0;
-    //printf("num_entrada_inodo antes del while: %d\n", num_entrada_inodo);
-    //struct entrada array_entradas[BLOCKSIZE / sizeof(entrada)];
 
     memset(&entrada, 0, sizeof(entrada));
-    //memset(array_entradas, 0, sizeof(array_entradas));
     int offset = 0;
     if (cant_entradas_inodo > 0)
     {
@@ -151,7 +143,6 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
             offset += sizeof(entrada);
             memset(&entrada, 0, sizeof(entrada));
             mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
-            //printf("dentro while--> read_f, entrad.nombre: %s, entrada.ninodo: %d \n", entrada.nombre,entrada.ninodo);
         }
     }
     //Cas entrada no existeix.
@@ -186,7 +177,6 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     if (strcmp(final, "/") == 0)
                     {
                         inodoReservado = reservar_inodo('d', permisos);
-                        //printf("Reservado inodo %d tipo d con permisos %d para %s \n", inodoReservado,permisos,inicial);
                         if (inodoReservado == ERROR)
                         {
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -217,7 +207,6 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     {
                         if (liberar_inodo(entrada.ninodo) == ERROR)
                         {
-                            //printf("Liberamos el inodo \n");
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                         }
                     }
@@ -247,8 +236,11 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     return EXIT_SUCCESS;
 }
 
+//Mètode que crea un fitxer/directori i la seva entrada de directori.
 int mi_creat(const char *camino, unsigned char permisos)
 {
+    //Entram en una zona critica.
+    mi_waitSem();
     //Declaram les variables necessaries.
     unsigned int p_inodo_dir = 0;
     unsigned int p_inodo = 0;
@@ -258,8 +250,12 @@ int mi_creat(const char *camino, unsigned char permisos)
     if ((error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 1, permisos)) < 0)
     {
         mostrar_error_buscar_entrada(error);
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
+    //Sortim zona critica.
+    mi_signalSem();
     return EXIT_SUCCESS;
 }
 
@@ -318,6 +314,7 @@ int mi_stat(const char *camino, struct STAT *p_stat)
     return EXIT_SUCCESS;
 }
 
+//Mètode que fica a un buffer de text les dades del contingut d'un directori o un fitxer
 int mi_dir(const char *camino, char *buffer, int tipo)
 {
     //Declaram les variables necessaries.
@@ -579,6 +576,8 @@ int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nby
 //Mètode que crea un enllaç entre dues rutes passades per paràmetre.
 int mi_link(const char *camino1, const char *camino2)
 {
+    //Entram en una zona critica.
+    mi_waitSem();
     //Declaram les variables necessaries.
     unsigned int p_inodo_dir1 = 0;
     unsigned int p_inodo1 = 0;
@@ -595,23 +594,31 @@ int mi_link(const char *camino1, const char *camino2)
     {
         //En cas d'error avisam al usuari.
         mostrar_error_buscar_entrada(error);
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
     //Lectura del inode corresponent a p_inodo1.
     if (leer_inodo(p_inodo1, &inodo) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
     //Comprovam que l'inode llegit té permisos de lectura.
     if ((inodo.permisos & 4) != 4)
     {
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
     //Comprovam que ambdues rutes son fitxers. En cas contrari, retornam ERROR.
     if ((camino1[strlen(camino1) - 1] == '/') && (camino2[strlen(camino2) - 1] == '/'))
     {
         printf("Ambas rutas deben referirse a un fichero.\n");
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
 
@@ -621,12 +628,16 @@ int mi_link(const char *camino1, const char *camino2)
         //En cas d'error avisam al usuari.
         //Ha de botar s'error de ERROR_ENTRADA_YA_EXISTENTE
         mostrar_error_buscar_entrada(error);
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
     //Llegim l'entrada creada corresponent a camino2.
     if (mi_read_f(p_inodo_dir2, &entrada, (p_entrada2 * sizeof(entrada)), sizeof(entrada)) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
     //Cream l'enllaç.
@@ -636,6 +647,8 @@ int mi_link(const char *camino1, const char *camino2)
     if ((nbytes = mi_write_f(p_inodo_dir2, &entrada, (p_entrada2 * sizeof(entrada)), sizeof(entrada))) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
     //Lliberam l'inode associat a p_inodo2.
@@ -643,6 +656,8 @@ int mi_link(const char *camino1, const char *camino2)
     if (liberar_inodo(p_inodo2) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
 
@@ -653,8 +668,12 @@ int mi_link(const char *camino1, const char *camino2)
     if (escribir_inodo(p_inodo1, inodo) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
+    //Sortim zona critica.
+    mi_signalSem();
     //Retorn exit.
     return EXIT_SUCCESS;
 }
@@ -663,6 +682,8 @@ int mi_link(const char *camino1, const char *camino2)
 //borram el propi fitxer o directori.
 int mi_unlink(const char *camino)
 {
+    //Entram en una zona critica.
+    mi_waitSem(); 
     //Declaracions variables.
     unsigned int p_inodo_dir = 0;
     unsigned int p_inodo = 0;
@@ -675,12 +696,16 @@ int mi_unlink(const char *camino)
     if ((error = buscar_entrada(camino, &p_inodo_dir, &p_inodo, &p_entrada, 0, 0) < 0))
     {
         mostrar_error_buscar_entrada(error);
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
     //Llegim l'inode associat al cami.
     if ((leer_inodo(p_inodo, &inodo)) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
     //Comprovació de si el camí passat per paràmetre és un directori.
@@ -690,6 +715,8 @@ int mi_unlink(const char *camino)
         if (inodo.tamEnBytesLog > 0)
         {
             printf("El directorio no está vació, no se puede borrar \n");
+            //Sortim zona critica.
+            mi_signalSem();
             return ERROR;
         }
     }
@@ -697,6 +724,8 @@ int mi_unlink(const char *camino)
     if ((leer_inodo(p_inodo_dir, &inodo_dir)) == ERROR)
     {
         fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
     }
     //Calculam el nombre d'entrades que té l'inode arrel.
@@ -708,6 +737,8 @@ int mi_unlink(const char *camino)
         if (mi_truncar_f(p_inodo_dir, inodo_dir.tamEnBytesLog - sizeof(entrada)) == ERROR)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            //Sortim zona critica.
+            mi_signalSem();
             return ERROR;
         }
         //Actualitzam les dades de l'inode.
@@ -721,18 +752,24 @@ int mi_unlink(const char *camino)
         if ((mi_read_f(p_inodo_dir, &entrada, (numeroEntradas - 1) * sizeof(entrada), sizeof(entrada))) == ERROR)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            //Sortim zona critica.
+            mi_signalSem();
             return ERROR;
         }
         //Sobrescrivim l'entrada (La darrera entrada ara es troba sobrescrita sobre l'entrada a eliminar).
         if ((mi_write_f(p_inodo_dir, &entrada, p_entrada * sizeof(entrada), sizeof(entrada))) == ERROR)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            //Sortim zona critica.
+            mi_signalSem();
             return ERROR;
         }
         //Eliminam la darrera entrada.
         if (mi_truncar_f(p_inodo_dir, inodo_dir.tamEnBytesLog - sizeof(entrada)) == ERROR)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            //Sortim zona critica.
+            mi_signalSem();
             return ERROR;
         }
         //Actualitzam les dades de l'inode.
@@ -741,23 +778,29 @@ int mi_unlink(const char *camino)
     //Alliberam o escrivim l'inode segons el nombre de links.
     if (inodo.nlinks == 0)
     {
-        //printf("Liberamos el inodo: %d\n", p_inodo);
+        //Liberamos el inodo
         if ((liberar_inodo(p_inodo)) == ERROR)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            //Sortim zona critica.
+            mi_signalSem();
             return ERROR;
         }
     }
     else
     {
-        //printf("NO liberamos el inodo: %d\n", p_inodo);
+        //liberamos el inodo
         inodo.ctime = time(NULL);
         if ((escribir_inodo(p_inodo, inodo)) == ERROR)
         {
             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+            //Sortim zona critica.
+            mi_signalSem();
             return ERROR;
         };
     }
 
+    //Sortim zona critica.
+    mi_signalSem();
     return EXIT_SUCCESS;
 }

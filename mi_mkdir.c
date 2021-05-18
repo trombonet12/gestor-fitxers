@@ -1,4 +1,5 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
+//Cream un directori
 #include "directorios.h"
 
 int main(int argc, char **argv)
