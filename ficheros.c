@@ -2,16 +2,21 @@
 
 #include "ficheros.h"
 
-//
+//Mètode que escriu contungut dins un fitxer o directori.
 int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offset, unsigned int nbytes)
-{
+{ /*
+    //Entram en una zona critica.
+    mi_waitSem();
+    //Sortim zona critica.
+    mi_signalSem();*/
     struct inodo inodo;
+    //Legim l'inode.
     if (leer_inodo(ninodo, &inodo) == ERROR)
     {
         return ERROR;
     }
     int numeroBytesEscritos = 0;
-
+    //Comprovació que l'inode llegit té permisos d'escritura.
     if ((inodo.permisos & 2) != 2)
     {
         printf("No tienes permisos de escritura en el inodo indicado \n");
@@ -33,8 +38,12 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         //El buffer a escriure cab a un sol bloc.
         if (primerBL == ultimoBL)
         {
+            //Entram en una zona critica.
+            mi_waitSem();
             //Obtenim el nombre de bloc fisic, corresponent a primerBL.
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 1);
+            //Sortim zona critica.
+            mi_signalSem();
             //Llegim el bloc des del Dispositiu Virtual.
             if (bread(nbfisico, buf_bloque) == ERROR)
             {
@@ -56,8 +65,13 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
         else
         {
             //La escriptura afecta a més d'un bloc.
+            //Entram en una zona critica.
+            mi_waitSem();
             //Obtenim el nombre del bloc físic, corresponent a primerBL.
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 1);
+            //Sortim zona critica.
+            mi_signalSem();
+
             if (bread(nbfisico, buf_bloque) == ERROR)
             {
                 //Error en la lectura.
@@ -77,10 +91,18 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             //Escriptura dels blocs lògics intermitjos.
             for (int i = primerBL + 1; i < ultimoBL; i++)
             {
+                //Entram en una zona critica.
+                mi_waitSem();
                 nbfisico = traducir_bloque_inodo(ninodo, i, 1);
+                //Sortim zona critica.
+                mi_signalSem();
                 numeroBytesEscritos += bwrite(nbfisico, buf_original + (BLOCKSIZE - desp1) + (i - primerBL - 1) * BLOCKSIZE);
             }
+            //Entram en una zona critica.
+            mi_waitSem();
             nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 1);
+            //Sortim zona critica.
+            mi_signalSem();
             if (bread(nbfisico, buf_bloque) == ERROR)
             {
                 //Error en la lectura.
@@ -97,6 +119,8 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
             numeroBytesEscritos += desp2 + 1;
         }
     }
+    //Entram en una zona critica.
+    mi_waitSem();
     //Llegim l'inode actualitzat.
     if (leer_inodo(ninodo, &inodo) == ERROR)
     {
@@ -116,21 +140,35 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     {
         return ERROR;
     }
-
+    //Sortim zona critica.
+    mi_signalSem();
+    //Retornam el numero de bytes escrits.
     return numeroBytesEscritos;
 }
 
+//Mètode que llegeix la informació d'un fitxer o directrori i l'emmagatzema en un buffer.
 int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsigned int nbytes)
 {
 
     struct inodo inodo;
+    //Entram en una zona critica.
+    mi_waitSem();
+    //Llegim l'inode.
     if (leer_inodo(ninodo, &inodo) == ERROR)
     {
         return ERROR;
     }
+    //Actualitzam les dades associades al inde.
+    inodo.atime = time(NULL);
+    //Escriptura del node actualitzat.
+    if (escribir_inodo(ninodo, inodo) == ERROR)
+    {
+        return ERROR;
+    }
+    //Sortim zona critica.
+    mi_signalSem();
     int leidos = 0;
-    //printf("Numero inodo: %d \n", ninodo);
-
+    //Comprovació de l'inode llegit té permisos de lectura.
     if ((inodo.permisos & 4) != 4)
     {
         printf("No tienes permisos de lectura en el inodo indicado \n");
@@ -166,7 +204,6 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         {
             //Obtenim el valor del bloc físic associat al bloc lògic a llegir.
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
-            //printf("Valor nbfisico: %d\n",nbfisico);
             //Bloc físic no existeix.
             if (nbfisico != ERROR)
             {
@@ -178,7 +215,6 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
                     fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                     return ERROR;
                 }
-                //leidos += nbytes;
                 //Copiam de buf_bloque a buf_original, els nbytes TOTALS  que ens interessen. Ignormal la resta.
                 memcpy(buf_original, buf_bloque + desp1, nbytes);
                 //Retonam la quantitat de bytes llegits del únic bloc llegit.
@@ -189,7 +225,6 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
         else
         {
             nbfisico = traducir_bloque_inodo(ninodo, primerBL, 0);
-            //printf("Valor nbfisico: %d\n",nbfisico);
             //Bloc físic no existeix.
             if (nbfisico != ERROR)
             {
@@ -210,7 +245,6 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             for (int i = primerBL + 1; i < ultimoBL; i++)
             {
                 nbfisico = traducir_bloque_inodo(ninodo, i, 0);
-                //printf("Valor nbfisico: %d\n",nbfisico);
                 //Bloc físic no existeix.
                 if (nbfisico != ERROR)
                 {
@@ -221,7 +255,6 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
             }
             //Tractamnet per al darrer bloc lògic a llegir.
             nbfisico = traducir_bloque_inodo(ninodo, ultimoBL, 0);
-            //printf("Valor nbfisico: %d\n",nbfisico);
             //Bloc físic no existeix.
             if (nbfisico != ERROR)
             {
@@ -295,28 +328,39 @@ void imprimir_stat(struct STAT *p_stat, unsigned int ninodo)
 //Mètode que actualitza l'atribut permisos d'un fitxer, passant per paràmetre el valor de l'inode que li correspon.
 int mi_chmod_f(unsigned int ninodo, unsigned char permisos)
 {
+    //Entram en una zona critica.
+    mi_waitSem();
     struct inodo inodo;
     //lectura de l'inode.
     if (leer_inodo(ninodo, &inodo) == ERROR)
+    { //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
+    }
     //Actualitzam valors dels inodes.
     inodo.permisos = permisos;
     inodo.ctime = time(NULL);
     //Escriptura de l'inode actualitzat.
     if (escribir_inodo(ninodo, inodo) == ERROR)
+    {
+        //Sortim zona critica.
+        mi_signalSem();
         return ERROR;
+    }
+    //Sortim zona critica.
+    mi_signalSem();
     return EXIT_SUCCESS;
 }
 
-//Allibera nbytes d'un inode
+//Allibera nbytes d'un inode.
 int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
 {
     struct inodo inodo;
+    //Llegim l'inode.
     if (leer_inodo(ninodo, &inodo) == ERROR)
     {
         return ERROR;
     }
-    //printf("Numero inodo: %d \n", ninodo);
 
     //Comprovam que  tengui permisos de lectura.
     if ((inodo.permisos & 2) != 2)
@@ -360,7 +404,7 @@ int mi_truncar_f(unsigned int ninodo, unsigned int nbytes)
             //Guardam les dades del inode.
             if (escribir_inodo(ninodo, inodo) == ERROR)
                 return ERROR;
-
+            //Retornm els bytes alliberats.
             return liberados;
         }
         else

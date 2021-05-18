@@ -7,6 +7,8 @@
 #include <unistd.h>     //SEEK_SET, read(), write(), open(), close(), lseek()
 #include <errno.h>      //errno
 #include <string.h>     //strerror()
+#include "semaforo_mutex_posix.h"
+
  
 #define BLOCKSIZE 1024 // bytes
 #define ERROR -1
@@ -15,3 +17,5 @@ int bmount(const char *camino);
 int bumount();
 int bwrite(unsigned int nbloque, const void *buf);
 int bread(unsigned int nbloque, void *buf);
+void mi_waitSem();
+void mi_signalSem();

@@ -1,4 +1,5 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
+//Inicialitzam el sistema de fitxers
 
 #include "directorios.h"
 //Declaram una varibale que contendrà el contigut a llegir o escriure. REALEMNT QUE FA

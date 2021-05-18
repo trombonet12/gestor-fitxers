@@ -1,4 +1,5 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
+//Funcio que escriu contingut a un fitxer
 #include "directorios.h"
 
 int main(int argc, char **argv)

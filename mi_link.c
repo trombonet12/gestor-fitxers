@@ -1,4 +1,5 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
+//Cream un vincle a un fitxer
 #include "directorios.h"
 
 int main(int argc, char **argv)
