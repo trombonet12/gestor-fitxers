@@ -12,6 +12,9 @@ static unsigned int inside_sc = 0;
 //Inicialitzar dispositiu virtual.
 int bmount(const char *camino)
 {
+    if(descriptor >0){
+        close(descriptor);
+    }
     //Cream el semafor que controlara la concurrencia
     if (!mutex)
     {
@@ -21,7 +24,6 @@ int bmount(const char *camino)
             return -1;
         }
     }
-
     //Instrucció que ens permet tenir els permisos d'accés i edició desitjats.
     umask(000);
     //Establim l'enlaç amb el fitxer passat per paràmetre, aplicant els permisos i els flags adiets.
@@ -41,6 +43,7 @@ int bmount(const char *camino)
 //Tancam enllaç amb el dispositiu virtual.
 int bumount()
 {
+    descriptor = close(descriptor);
     //Eliminam el semàfor.
     deleteSem();
     //Retora 0  en cas d'èxit i -1 en cas d'error.
