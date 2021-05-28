@@ -92,6 +92,8 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
     int cant_entradas_inodo, num_entrada_inodo;
     int inodoReservado = 0;
 
+    //printf("**p_inodo: %d \n", *p_inodo);
+    //printf("**p_entrada: %d \n", *p_entrada);
     //Lectura del SB.
     if (bread(posSB, &SB) == ERROR)
     {
@@ -104,11 +106,13 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
         *p_inodo = SB.posInodoRaiz;
         //És la primera entrada de totes.
         *p_entrada = 0;
+        //printf("Som al directori arrel\n");
         return 0;
     }
 
     //Dividir el camino_parcial amb inicial i final.
     tipo = extraer_camino(camino_parcial, inicial, final);
+    //printf("Tipo 1--> directorio// Tipo 0--> fichero: %d \n", tipo);
     if (tipo == ERROR)
     {
         return ERROR_CAMINO_INCORRECTO;
@@ -129,20 +133,38 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
 
     //Calculam la quantitat de entrades que té l'inode corresponent.
     cant_entradas_inodo = inodo_dir.tamEnBytesLog / sizeof(entrada);
+    //printf("Calculo cant_entradas_inodo de inodo_dir: %d\n", cant_entradas_inodo);
     //Número de entrada inicial.
     num_entrada_inodo = 0;
+    //printf("num_entrada_inodo antes del while: %d\n", num_entrada_inodo);
+    struct entrada array_entradas[BLOCKSIZE / sizeof(entrada)];
 
-    memset(&entrada, 0, sizeof(entrada));
+    memset(array_entradas, 0, sizeof(array_entradas));
     int offset = 0;
+    int i = 0;
     if (cant_entradas_inodo > 0)
     {
-        mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
+
+        
+        mi_read_f(*p_inodo_dir, array_entradas, offset, sizeof(array_entradas));
         while ((num_entrada_inodo < cant_entradas_inodo) && (strcmp(inicial, entrada.nombre)) != 0)
         {
-            num_entrada_inodo++;
-            offset += sizeof(entrada);
-            memset(&entrada, 0, sizeof(entrada));
-            mi_read_f(*p_inodo_dir, &entrada, offset, sizeof(entrada));
+            for (i = 0; (num_entrada_inodo < cant_entradas_inodo) && (i < sizeof(array_entradas)); i++)
+            {
+                if ((strcmp(inicial, array_entradas[i].nombre)) == 0)
+                {
+                    entrada = array_entradas[i];
+                    //printf("Entrada trobada, entrada.nombre: %s, entrada.ninodo: %d \n", entrada.nombre, entrada.ninodo);
+                    break;
+                }
+                else
+                {
+                    num_entrada_inodo++;
+                }
+            }
+            offset += BLOCKSIZE;
+            memset(array_entradas, 0, sizeof(array_entradas));
+            mi_read_f(*p_inodo_dir, array_entradas, offset, sizeof(array_entradas));
         }
     }
     //Cas entrada no existeix.
@@ -177,6 +199,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     if (strcmp(final, "/") == 0)
                     {
                         inodoReservado = reservar_inodo('d', permisos);
+                        //printf("Reservado inodo %d tipo d con permisos %d para %s \n", inodoReservado,permisos,inicial);
                         if (inodoReservado == ERROR)
                         {
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
@@ -207,6 +230,7 @@ int buscar_entrada(const char *camino_parcial, unsigned int *p_inodo_dir, unsign
                     {
                         if (liberar_inodo(entrada.ninodo) == ERROR)
                         {
+                            //printf("Liberamos el inodo \n");
                             fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
                         }
                     }
