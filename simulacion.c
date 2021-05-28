@@ -1,12 +1,9 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
 //Crea uns procesos de prova que accedeixen concurrentment al sistema de fitxers.
 #include "simulacion.h"
-#define REGMAX 500000
-#define NUMPROCESOS 100
-#define NUMESCRITURAS 50
+
 static int acabados = 0;
 
-//
 void my_sleep(unsigned msec)
 { //recibe tiempo en milisegundos
     struct timespec req, rem;
@@ -110,7 +107,7 @@ int main(int argc, char **argv)
                     registro.nEscritura = nescrituras;
                     registro.nRegistro = rand() % REGMAX;
                     //printf("[simulacion.c--> Escritura %d en %sprueba.dat] \n", nescrituras, directorioHijo);
-                    if((mi_write(directorioHijo, &registro, registro.nRegistro*sizeof(registro), sizeof(registro)) == ERROR)){
+                    if((mi_write(ficheroHijo, &registro, registro.nRegistro*sizeof(registro), sizeof(registro)) == ERROR)){
                         printf("ERROR ESCRITURA REGISTRO \n");
                     }
                     //Esperam 0,05 segons.

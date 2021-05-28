@@ -3,6 +3,10 @@
 #include <signal.h>
 #include "directorios.h"
 
+#define REGMAX 500000
+#define NUMPROCESOS 100
+#define NUMESCRITURAS 50
+
 struct REGISTRO { //sizeof(struct REGISTRO): 24
    time_t fecha; //Precisión segundos
    pid_t pid; //PID del proceso que lo ha creado
