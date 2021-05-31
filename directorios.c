@@ -527,12 +527,12 @@ int mi_write(const char *camino, const void *buf, unsigned int offset, unsigned 
 int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nbytes)
 {
     unsigned int p_inodo = 0;
-    char string[128];
+    //char string[128];
     //Accés a "cache" per comprovar si la ruta passada per paràmetre, hem accedit a ella anteriorment.
     if (strcmp(UltimaEntrada[1].camino, camino) == 0)
     {
         //sprintf(string, "[mi_read() --> Utilizamos la caché de lectura en vez de llamar a buscar_entrada()]\n");
-        write(2, string, strlen(string));
+        //write(2, string, strlen(string));
         //Obtenim l'inode al qual escriure.
         p_inodo = UltimaEntrada[1].p_inodo;
     }
@@ -552,7 +552,7 @@ int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nby
             return ERROR;
         }
         //sprintf(string, " [mi_read() --> Actualizamos la caché de lectura]\n");
-        write(2, string, strlen(string));
+        //write(2, string, strlen(string));
         //Actualitzame els valor de la "cache".
         strcpy(UltimaEntrada[1].camino, camino);
         UltimaEntrada[1].p_inodo = p_inodo;
@@ -566,7 +566,7 @@ int mi_read(const char *camino, void *buf, unsigned int offset, unsigned int nby
     if (bytes == ERROR)
     {
         //sprintf(string, "ERROR_LECTURA: La funcion mi_read ha devuelto un ERROR.\n");
-        write(2, string, strlen(string));
+        //write(2, string, strlen(string));
         return ERROR;
     }
     //Retorn el nombre de bytes llegits.

@@ -47,7 +47,7 @@ int main(int argc, char **argv)
 
         if (cant_entradas_inodo != NUMPROCESOS)
         {
-            printf("");
+            //printf("");
         }
 
         if (bumount() < 0)
