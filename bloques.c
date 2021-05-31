@@ -2,6 +2,7 @@
 
 //Include de la capçalera associada a bloques.c
 #include "bloques.h"
+#include "semaforo_mutex_posix.h"
 
 //Declaram i inicialitzam una variable int que contindrà el valor del descriptor.
 static int descriptor = 0;
@@ -12,9 +13,15 @@ static unsigned int inside_sc = 0;
 //Inicialitzar dispositiu virtual.
 int bmount(const char *camino)
 {
-    if(descriptor >0){
+    if (descriptor > 0)
+    {
         close(descriptor);
     }
+
+    //Instrucció que ens permet tenir els permisos d'accés i edició desitjats.
+    umask(000);
+    //Establim l'enlaç amb el fitxer passat per paràmetre, aplicant els permisos i els flags adiets.
+    descriptor = open(camino, O_RDWR | O_CREAT, 0666);
     //Cream el semafor que controlara la concurrencia
     if (!mutex)
     {
@@ -24,30 +31,21 @@ int bmount(const char *camino)
             return -1;
         }
     }
-    //Instrucció que ens permet tenir els permisos d'accés i edició desitjats.
-    umask(000);
-    //Establim l'enlaç amb el fitxer passat per paràmetre, aplicant els permisos i els flags adiets.
-    descriptor = open(camino, O_RDWR | O_CREAT, 0666);
-    if (descriptor == -1)
-    {
-        //Cas operació errònia.
-        return ERROR;
-    }
-    else
-    {
-        //Cas operació completada amb èxit.
-        return descriptor;
-    }
+
+    return descriptor;
 }
 
 //Tancam enllaç amb el dispositiu virtual.
 int bumount()
 {
-    descriptor = close(descriptor);
+    descriptor = close(descriptor); // Fer control de errors
+    if (descriptor == -1){
+        fprintf(stderr, "Error %d: %s\n", errno, strerror(errno));
+        return ERROR;
+    }
     //Eliminam el semàfor.
     deleteSem();
-    //Retora 0  en cas d'èxit i -1 en cas d'error.
-    return close(descriptor);
+    return EXIT_SUCCESS;
 }
 
 //Escriptura d'un bloc al dispositiu virtual.
@@ -108,7 +106,7 @@ void mi_waitSem()
     inside_sc++;
 }
 
-//Funcio que avisa quan es surt d'una zona critica..............
+//Funcio que avisa quan es surt d'una zona critica.
 void mi_signalSem()
 {
     inside_sc--;

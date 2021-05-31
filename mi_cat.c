@@ -1,7 +1,7 @@
 //AUTORS: Joan López Ferrer i Miquel Vidal Cortés
 //Imprimim el contingut d'un fitxer
 #include "directorios.h"
-#define BUFFERTAM 1024
+#define BUFFERTAM 1500
 
 int main(int argc, char **argv)
 {
