@@ -31,7 +31,6 @@ int main(int argc, char **argv)
             while (leidos > 0)
             {
                 write(1, buffer_texto, leidos);
-
                 memset(buffer_texto, 0, BUFFERTAM);
                 total_leidos += leidos;
                 leidos = mi_read(argv[2], buffer_texto, offset, BUFFERTAM);
