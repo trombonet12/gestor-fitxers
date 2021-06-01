@@ -4,11 +4,7 @@
 
 //Mètode que escriu contungut dins un fitxer o directori.
 int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offset, unsigned int nbytes)
-{ /*
-    //Entram en una zona critica.
-    mi_waitSem();
-    //Sortim zona critica.
-    mi_signalSem();*/
+{ 
     struct inodo inodo;
     //Legim l'inode.
     if (leer_inodo(ninodo, &inodo) == ERROR)
@@ -124,6 +120,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     //Llegim l'inode actualitzat.
     if (leer_inodo(ninodo, &inodo) == ERROR)
     {
+        mi_signalSem();
         return ERROR;
     }
     //Comprovam si hem escrit més enllà del EOF del fitxer associat al inode.
@@ -138,6 +135,7 @@ int mi_write_f(unsigned int ninodo, const void *buf_original, unsigned int offse
     //Escriptura del node actualitzat.
     if (escribir_inodo(ninodo, inodo) == ERROR)
     {
+        mi_signalSem();
         return ERROR;
     }
     //Sortim zona critica.
@@ -156,6 +154,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     //Llegim l'inode.
     if (leer_inodo(ninodo, &inodo) == ERROR)
     {
+        mi_signalSem();
         return ERROR;
     }
     //Actualitzam les dades associades al inde.
@@ -163,6 +162,7 @@ int mi_read_f(unsigned int ninodo, void *buf_original, unsigned int offset, unsi
     //Escriptura del node actualitzat.
     if (escribir_inodo(ninodo, inodo) == ERROR)
     {
+        mi_signalSem();
         return ERROR;
     }
     //Sortim zona critica.

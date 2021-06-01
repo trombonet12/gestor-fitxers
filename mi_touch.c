@@ -21,9 +21,7 @@ int main(int argc, char **argv)
             if (argv[3][strlen(argv[3])-1] != '/')
             {
                 //printf("Iniciamos creacion del fichero\n"); //Print clarificatiu
-                if(mi_creat(argv[3],argv[2][0])==ERROR){
-                    printf("ERROR: Error durante la creacion del fichero.\n");
-                }
+                mi_creat(argv[3],argv[2][0]);
             }
             else
             {
